@@ -116,3 +116,4 @@ All routes are protected:
 - Ensure all environment variables are set
 - Check Supabase connection
 
+

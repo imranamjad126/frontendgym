@@ -100,3 +100,4 @@ END $$;
 ### Database not set up?
 - Run `supabase/01-multi-user-setup.sql` first in SQL Editor
 
+

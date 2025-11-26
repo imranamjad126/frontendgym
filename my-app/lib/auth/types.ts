@@ -23,3 +23,4 @@ export interface AuthUser {
   gym_id: string | null;
 }
 
+
