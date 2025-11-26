@@ -18,7 +18,8 @@ export async function middleware(request: NextRequest) {
     '/test-auth',
     '/verify-setup',
     '/auto-fix',
-    '/admin/auto-fix' // Must be public
+    '/admin/auto-fix',
+    '/auto-fix-complete' // Complete diagnostic page
   ];
   
   // Check if it's a public route (exact match or starts with)
