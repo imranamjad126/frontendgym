@@ -62,14 +62,17 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Public routes (accessible without login) - MUST be checked FIRST
+  // IMPORTANT: Check /admin/auto-fix BEFORE checking /admin routes
   const publicRoutes = [
     '/login',
     '/setup-admin',
     '/test-auth',
     '/verify-setup',
-    '/auto-fix',
-    '/admin/auto-fix'
+    '/auto-fix'
   ];
+  
+  // Special case: /admin/auto-fix is public (check before /admin check)
+  const isAdminAutoFix = pathname === '/admin/auto-fix' || pathname.startsWith('/admin/auto-fix/');
   
   // Check if it's a public route
   const isPublicRoute = publicRoutes.some(route => {
@@ -80,7 +83,8 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith('/_next') || 
       pathname.startsWith('/api/auth') ||
       pathname.startsWith('/api/') ||
-      isPublicRoute) {
+      isPublicRoute ||
+      isAdminAutoFix) {
     if (session && pathname === '/login') {
       return NextResponse.redirect(new URL('/', request.url));
     }
@@ -101,8 +105,8 @@ export async function middleware(request: NextRequest) {
 
   const userRole = userData?.role;
 
-  // Admin routes
-  if (pathname.startsWith('/admin')) {
+  // Admin routes (but exclude /admin/auto-fix which is already public)
+  if (pathname.startsWith('/admin') && pathname !== '/admin/auto-fix' && !pathname.startsWith('/admin/auto-fix/')) {
     if (userRole !== 'ADMIN') {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
