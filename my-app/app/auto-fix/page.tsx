@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/auth/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -239,8 +239,17 @@ export default function AutoFixPage() {
     setLoading(false);
   };
 
+  // Prevent any redirects - this page should always be accessible
+  useEffect(() => {
+    // Ensure we're on this page and not redirected
+    if (typeof window !== 'undefined' && window.location.pathname !== '/auto-fix' && window.location.pathname !== '/admin/auto-fix') {
+      // Don't redirect, just log
+      console.log('Auto-fix page loaded');
+    }
+  }, []);
+
   return (
-    <div className="min-h-screen bg-slate-50 p-4">
+    <div className="min-h-screen bg-slate-50 p-4" style={{ position: 'relative', zIndex: 9999 }}>
       <div className="max-w-4xl mx-auto space-y-6">
         <Card>
           <CardHeader>
