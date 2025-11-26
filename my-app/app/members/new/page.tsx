@@ -6,7 +6,7 @@ import { MemberForm } from '@/components/members/MemberForm';
 import { MembershipSlip } from '@/components/members/MembershipSlip';
 import { useMembers } from '@/hooks/useMembers';
 import { saveMember } from '@/lib/storage/memberStorage';
-import { FeeType, FEE_AMOUNTS } from '@/lib/types/fee';
+import { FeeType, FeeStatus, FEE_AMOUNTS } from '@/lib/types/fee';
 import { Member } from '@/lib/types/member';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
@@ -36,7 +36,7 @@ export default function AddMemberPage() {
         feeType: feeType,
         feeAmount: FEE_AMOUNTS[feeType],
         feePaid: true,
-        feeStatus: 'ACTIVE',
+        feeStatus: FeeStatus.ACTIVE,
         status: 'Active',
         feePaidDate: new Date(data.feePaidDate),
         expiryDate: new Date(data.expiryDate),
