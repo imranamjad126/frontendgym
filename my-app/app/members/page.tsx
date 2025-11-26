@@ -23,24 +23,16 @@ function MembersPageContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const hasSeeded = useRef(false);
 
-  // Helper function to load deleted members from Supabase (always fresh, no cache)
-  const loadDeletedMembers = useCallback(async () => {
+  // Helper function to load deleted members from localStorage (always fresh, no cache)
+  const loadDeletedMembers = useCallback(() => {
     try {
-      const { fetchAllMembersFromSupabase } = await import('@/lib/supabase/memberOperations');
-      const { data, error } = await fetchAllMembersFromSupabase(true);
-      
-      if (error) {
-        console.error('Failed to load deleted members:', error);
-        setDeletedMembers([]);
-        return [];
-      }
-      
-      const deleted = data
+      const allMembers = getAllMembers(true); // Include deleted members
+      const deleted = allMembers
         .filter(m => m.deletedAt)
         .map(member => ({
           ...member,
           status: calculateMembershipStatus(member.expiryDate),
-        }));
+        })) as MemberWithStatus[];
       setDeletedMembers(deleted);
       return deleted;
     } catch (error) {
@@ -99,14 +91,14 @@ function MembersPageContent() {
 
   // For deleted page, use deletedMembers directly (already filtered)
   // For other pages, use regular members and apply filter
-  const categoryFilteredMembers = useMemo(() => {
+  const categoryFilteredMembers = useMemo((): MemberWithStatus[] => {
     return filter === 'deleted' 
       ? deletedMembers  // Already filtered to only deleted members
       : (filter ? filterMembersByCategory(members, filter) : members);
   }, [filter, deletedMembers, members]);
   
   // Apply search filter if search query exists
-  const filteredMembers = useMemo(() => {
+  const filteredMembers = useMemo((): MemberWithStatus[] => {
     if (!searchQuery.trim()) {
       return categoryFilteredMembers;
     }
