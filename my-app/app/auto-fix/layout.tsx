@@ -1,9 +1,14 @@
-// No layout wrapper for auto-fix page - make it completely standalone
+// Standalone layout for auto-fix page - NO Layout wrapper, NO Header, NO Sidebar
+// This page must be accessible without login
 export default function AutoFixLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc' }}>
+      {children}
+    </div>
+  );
 }
 

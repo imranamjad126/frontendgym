@@ -7,7 +7,17 @@ import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 
 export function Header() {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
+  
+  // Don't redirect, just show header
+  if (loading) {
+    return (
+      <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6">
+        <h2 className="text-lg font-semibold text-slate-900">Gym Membership Management</h2>
+        <div className="text-sm text-slate-500">Loading...</div>
+      </header>
+    );
+  }
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
 
   useEffect(() => {
