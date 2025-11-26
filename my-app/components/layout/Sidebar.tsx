@@ -13,98 +13,98 @@ import {
   UserMinus,
   UsersRound,
   Trash2,
-  FileText
+  FileText,
+  Building2,
+  Shield
 } from 'lucide-react';
 import { Navigation } from './Navigation';
 import { Logo } from './Logo';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 function NavigationItems() {
+  const { user } = useAuth();
+
   return (
     <nav className="space-y-2">
+      {user?.role === 'ADMIN' && (
+        <>
           <Navigation 
-            href="/" 
+            href="/admin" 
+            label="Admin Dashboard" 
+            icon={Shield} 
+            iconColor="text-purple-600" 
+            iconHoverColor="hover:text-purple-700" 
+          />
+          <Navigation 
+            href="/admin/gyms" 
+            label="Gyms" 
+            icon={Building2} 
+            iconColor="text-indigo-600" 
+            iconHoverColor="hover:text-indigo-700" 
+          />
+          <Navigation 
+            href="/admin/staff" 
+            label="Staff" 
+            icon={Users} 
+            iconColor="text-blue-600" 
+            iconHoverColor="hover:text-blue-700" 
+          />
+        </>
+      )}
+      
+      {(user?.role === 'STAFF' || user?.role === 'ADMIN') && (
+        <>
+          <Navigation 
+            href={user?.role === 'ADMIN' ? '/' : '/staff'} 
             label="Dashboard" 
             icon={LayoutDashboard} 
             iconColor="text-blue-600" 
             iconHoverColor="hover:text-blue-700" 
           />
           <Navigation 
-            href="/attendance" 
+            href="/staff/attendance" 
             label="Daily Visitors" 
             icon={Calendar} 
             iconColor="text-purple-600" 
             iconHoverColor="hover:text-purple-700" 
           />
           <Navigation 
-            href="/members?filter=unpaid" 
+            href="/staff/members?filter=unpaid" 
             label="Unpaid Members" 
             icon={Wallet} 
             iconColor="text-red-600" 
             iconHoverColor="hover:text-red-700" 
           />
           <Navigation 
-            href="/members/new" 
+            href="/staff/members/new" 
             label="Add Member" 
             icon={UserPlus} 
             iconColor="text-teal-600" 
             iconHoverColor="hover:text-teal-700" 
           />
           <Navigation 
-            href="/members?filter=active" 
+            href="/staff/members?filter=active" 
             label="Active Members" 
             icon={UserCheck} 
             iconColor="text-green-600" 
             iconHoverColor="hover:text-green-700" 
           />
           <Navigation 
-            href="/balance" 
+            href="/staff/balance" 
             label="Balance" 
             icon={Wallet} 
             iconColor="text-emerald-600" 
             iconHoverColor="hover:text-emerald-700" 
           />
           <Navigation 
-            href="/reports" 
-            label="Reports" 
-            icon={FileText} 
-            iconColor="text-blue-500" 
-            iconHoverColor="hover:text-blue-600" 
-          />
-          <Navigation 
-            href="/members?filter=inactive" 
-            label="InActive Members" 
-            icon={UserX} 
-            iconColor="text-gray-500" 
-            iconHoverColor="hover:text-gray-600" 
-          />
-          <Navigation 
-            href="/members?filter=freeze" 
-            label="Freeze Members" 
-            icon={Snowflake} 
-            iconColor="text-sky-600" 
-            iconHoverColor="hover:text-sky-700" 
-          />
-          <Navigation 
-            href="/members?filter=dormant" 
-            label="Dormant Members" 
-            icon={UserMinus} 
-            iconColor="text-amber-600" 
-            iconHoverColor="hover:text-amber-700" 
-          />
-          <Navigation 
-            href="/members" 
-            label="Total Members" 
+            href="/staff/members" 
+            label="All Members" 
             icon={UsersRound} 
             iconColor="text-indigo-600" 
             iconHoverColor="hover:text-indigo-700" 
           />
-          <Navigation 
-            href="/members?filter=deleted" 
-            label="Bin" 
-            icon={Trash2} 
-            iconColor="text-red-700" 
-            iconHoverColor="hover:text-red-800" 
-          />
+        </>
+      )}
     </nav>
   );
 }
