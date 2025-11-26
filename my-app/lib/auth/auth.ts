@@ -8,7 +8,27 @@ export async function signIn(email: string, password: string) {
   });
 
   if (error) {
-    throw error;
+    // Provide more specific error messages
+    if (error.message.includes('Invalid login credentials')) {
+      throw new Error('Invalid email or password. Please check your credentials.');
+    } else if (error.message.includes('Email not confirmed')) {
+      throw new Error('Please confirm your email before signing in.');
+    } else {
+      throw new Error(error.message || 'Failed to sign in. Please try again.');
+    }
+  }
+
+  // Verify user exists in users table
+  if (data.user) {
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', data.user.id)
+      .single();
+
+    if (userError || !userData) {
+      throw new Error('User account not found. Please contact administrator.');
+    }
   }
 
   return data;
