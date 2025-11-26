@@ -1,4 +1,5 @@
 import { PaymentRecord } from '../types/payment';
+import { FeeType } from '../types/fee';
 import { getItem, setItem } from './localStorage';
 import { STORAGE_KEYS } from './storageKeys';
 import { generateMemberId } from '../utils/idGenerator';
@@ -29,7 +30,7 @@ export function getPaymentsByDateRange(startDate: Date, endDate: Date): PaymentR
 export function savePayment(
   memberId: number,
   memberName: string,
-  feeType: 'WITH_AC' | 'WITHOUT_AC' | 'ONE_DAY',
+  feeType: FeeType,
   amount: number,
   paymentDate: Date = new Date()
 ): PaymentRecord {

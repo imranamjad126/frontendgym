@@ -16,7 +16,7 @@ export default function TestSupabasePage() {
     try {
       console.log('🧪 Starting direct Supabase test...');
       console.log('Supabase client:', supabase);
-      console.log('Supabase URL:', supabase.supabaseUrl);
+      console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL || 'Not configured');
       
       // Test 1: Simple query
       console.log('Test 1: Simple select query...');
@@ -63,6 +63,8 @@ export default function TestSupabasePage() {
           errorProperties: Object.getOwnPropertyNames(error || {}),
         } : null,
       });
+      
+      console.log('🧪 Supabase test completed successfully');
     } catch (err) {
       console.error('Exception in test:', err);
       setResult({

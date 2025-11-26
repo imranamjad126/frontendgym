@@ -1,4 +1,4 @@
-import { Member } from '../types/member';
+import { Member, MemberWithStatus } from '../types/member';
 import { FeeStatus } from '../types/fee';
 import { MembershipStatus } from '../types/status';
 import { calculateMembershipStatus } from './status';
@@ -133,7 +133,7 @@ export function isMemberInactive(member: Member): boolean {
   const isExpired = membershipStatus === MembershipStatus.EXPIRED;
   
   // Condition 3: Member is frozen (manual freeze)
-  const isFrozen = member.status === 'Freeze' || member.feeStatus === FeeStatus.FREEZE;
+  const isFrozen = member.feeStatus === FeeStatus.FREEZE;
   
   // Condition 4: Attendance missing for current billing cycle (<30 days)
   const hasMissingAtt = hasMissingAttendance(member);
@@ -158,7 +158,7 @@ export function getInactiveReasons(member: Member): string[] {
     reasons.push('Expired');
   }
   
-  if (member.status === 'Freeze' || member.feeStatus === FeeStatus.FREEZE) {
+  if (member.feeStatus === FeeStatus.FREEZE) {
     reasons.push('Frozen');
   }
   
@@ -169,7 +169,7 @@ export function getInactiveReasons(member: Member): string[] {
   return reasons;
 }
 
-export function filterMembersByCategory(members: Member[], filter: string): Member[] {
+export function filterMembersByCategory(members: MemberWithStatus[], filter: string): MemberWithStatus[] {
   // Helper to check if member is deleted
   const isDeleted = (m: Member) => m.deletedAt !== undefined;
   
@@ -184,19 +184,19 @@ export function filterMembersByCategory(members: Member[], filter: string): Memb
       return members.filter(m => isMemberInactive(m));
     
     case 'freeze':
-      // Only show members with status = "Freeze" OR feeStatus = "Freeze" and not deleted
+      // Only show members with feeStatus = "Freeze" and not deleted
       return members.filter(m => 
-        (m.status === 'Freeze' || m.feeStatus === FeeStatus.FREEZE) && !isDeleted(m)
+        m.feeStatus === FeeStatus.FREEZE && !isDeleted(m)
       );
     
     case 'dormant':
-      // Show members with status = "Dormant" OR members with 30+ days no attendance
+      // Show members with feeStatus = "Dormant" OR members with 30+ days no attendance
       return members.filter(m => {
         if (isDeleted(m)) {
           return false;
         }
         // Check if member is marked as Dormant OR has 30+ days no attendance
-        return m.status === 'Dormant' || isMemberDormant(m);
+        return m.feeStatus === FeeStatus.DORMANT || isMemberDormant(m);
       });
     
     case 'unpaid':

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Member } from '@/lib/types/member';
+import { FeeType } from '@/lib/types/fee';
 import { format } from 'date-fns';
 import { getAllPayments } from '@/lib/storage/paymentStorage';
 
@@ -19,7 +20,7 @@ export function FeeBreakdownTable({ members }: FeeBreakdownTableProps) {
   const feeRecords = allPayments
     .map(payment => ({
       name: payment.memberName,
-      feeType: payment.feeType === 'WITH_AC' ? 'With AC' : 'Without AC',
+      feeType: payment.feeType === FeeType.WITH_AC ? 'With AC' : 'Without AC',
       amount: payment.amount,
       paymentDate: payment.paymentDate,
       status: 'Paid' as const,

@@ -1,6 +1,6 @@
 import { supabase } from '../supabase';
 import { Member } from '../types/member';
-import { FeeType, FEE_AMOUNTS } from '../types/fee';
+import { FeeType, FeeStatus, FEE_AMOUNTS } from '../types/fee';
 
 // Supabase table structure mapping
 interface SupabaseMember {
@@ -33,7 +33,7 @@ function supabaseToMember(supabaseMember: SupabaseMember): Member {
     feeType: (supabaseMember.plan as FeeType) || FeeType.WITHOUT_AC,
     feeAmount: supabaseMember.fee_amount || FEE_AMOUNTS[supabaseMember.plan as FeeType] || FEE_AMOUNTS[FeeType.WITHOUT_AC],
     feePaid: supabaseMember.fee_paid ?? false,
-    feeStatus: supabaseMember.status === 'active' ? 'ACTIVE' : supabaseMember.status === 'inactive' ? 'UNPAID' : 'EXPIRED',
+    feeStatus: supabaseMember.status === 'active' ? FeeStatus.ACTIVE : supabaseMember.status === 'inactive' ? FeeStatus.UNPAID : FeeStatus.INACTIVE,
     feePaidDate: supabaseMember.fee_paid_date ? new Date(supabaseMember.fee_paid_date) : new Date(supabaseMember.start_date),
     expiryDate: new Date(supabaseMember.end_date),
     status: supabaseMember.status,

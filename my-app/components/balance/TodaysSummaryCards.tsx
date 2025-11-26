@@ -31,17 +31,17 @@ export function TodaysSummaryCards({ members }: TodaysSummaryCardsProps) {
 
   // Fees Collected Today (Without AC) - from payment history
   const feesWithoutACToday = paymentsToday
-    .filter(p => p.feeType === 'WITHOUT_AC')
+    .filter(p => p.feeType === FeeType.WITHOUT_AC)
     .reduce((sum, p) => sum + p.amount, 0);
 
   // Fees Collected Today (With AC) - from payment history
   const feesWithACToday = paymentsToday
-    .filter(p => p.feeType === 'WITH_AC')
+    .filter(p => p.feeType === FeeType.WITH_AC)
     .reduce((sum, p) => sum + p.amount, 0);
 
   // Fees Collected Today (One Day) - from payment history
   const feesOneDayToday = paymentsToday
-    .filter(p => p.feeType === 'ONE_DAY')
+    .filter(p => p.feeType === FeeType.ONE_DAY)
     .reduce((sum, p) => sum + p.amount, 0);
 
   // Total Fees Collected Today (includes all: Without AC, With AC, and One Day)

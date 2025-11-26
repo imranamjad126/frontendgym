@@ -1,7 +1,7 @@
 import { getAllPayments } from '../storage/paymentStorage';
 import { getAllMembers } from '../storage/memberStorage';
 import { Member } from '../types/member';
-import { FeeStatus } from '../types/fee';
+import { FeeStatus, FeeType } from '../types/fee';
 
 /**
  * Check if a member is active (same logic as other utilities)
@@ -13,7 +13,7 @@ function isActiveMember(member: Member): boolean {
   }
   
   // Exclude frozen members
-  if (member.status === 'Freeze' || member.feeStatus === FeeStatus.FREEZE) {
+  if (member.feeStatus === FeeStatus.FREEZE) {
     return false;
   }
   
@@ -77,15 +77,15 @@ export function getExpensesBreakdown(): ExpensesBreakdown {
     }
     
     // One Day Payment: Amount = 150 or feeType = ONE_DAY
-    if (payment.amount === 150 || payment.feeType === 'ONE_DAY') {
+    if (payment.amount === 150 || payment.feeType === FeeType.ONE_DAY) {
       oneDayPayments += payment.amount;
     }
     // Standard monthly fees: 2500 (WITHOUT_AC) or 3000 (WITH_AC)
     else if (payment.amount === 2500 || payment.amount === 3000) {
       // Categorize standard monthly fees by fee type
-      if (payment.feeType === 'WITH_AC') {
+      if (payment.feeType === FeeType.WITH_AC) {
         acMembers += payment.amount;
-      } else if (payment.feeType === 'WITHOUT_AC') {
+      } else if (payment.feeType === FeeType.WITHOUT_AC) {
         nonAcMembers += payment.amount;
       }
     }

@@ -84,30 +84,37 @@ export function FeatureCards() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {features.map((feature) => {
           const Icon = feature.icon;
-          const CardWrapper = feature.href ? Link : 'div';
-          const wrapperProps = feature.href 
-            ? { href: feature.href, className: 'block' } 
-            : { 
-                className: 'block cursor-pointer',
-                onClick: feature.onClick || undefined,
-              };
+          const cardContent = (
+            <Card className="shadow-md hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-slate-600">
+                  {feature.label}
+                </CardTitle>
+                <div className={`${feature.bgColor} ${feature.color} p-2 rounded-lg`}>
+                  <Icon className="h-4 w-4" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-slate-900">{feature.value}</div>
+              </CardContent>
+            </Card>
+          );
           
           return (
-            <CardWrapper key={feature.label} {...wrapperProps}>
-              <Card className="shadow-md hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-600">
-                    {feature.label}
-                  </CardTitle>
-                  <div className={`${feature.bgColor} ${feature.color} p-2 rounded-lg`}>
-                    <Icon className="h-4 w-4" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-slate-900">{feature.value}</div>
-                </CardContent>
-              </Card>
-            </CardWrapper>
+            <div key={feature.label}>
+              {feature.href ? (
+                <Link href={feature.href} className="block">
+                  {cardContent}
+                </Link>
+              ) : (
+                <div 
+                  className="block cursor-pointer"
+                  onClick={feature.onClick || undefined}
+                >
+                  {cardContent}
+                </div>
+              )}
+            </div>
           );
         })}
       </div>

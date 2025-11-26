@@ -14,7 +14,7 @@ function isActiveMember(member: Member): boolean {
   }
   
   // Exclude frozen members
-  if (member.status === 'Freeze' || member.feeStatus === FeeStatus.FREEZE) {
+  if (member.feeStatus === FeeStatus.FREEZE) {
     return false;
   }
   
