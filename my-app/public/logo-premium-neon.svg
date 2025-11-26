@@ -1,0 +1,137 @@
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Shield gradient - Black to Dark Gray -->
+    <linearGradient id="shield-gradient-neon" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#000000" />
+      <stop offset="50%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    
+    <!-- Highlight gradient -->
+    <linearGradient id="highlight-gradient-neon" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#34d399" stop-opacity="0" />
+    </linearGradient>
+    
+    <!-- Dumbbell gradient -->
+    <linearGradient id="dumbbell-gradient-neon" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    
+    <!-- Strong glow filter for neon effect -->
+    <filter id="glow-neon">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Shield Shape -->
+  <path
+    d="M60 6 L15 28 L15 62 C15 88 40 108 60 116 C80 108 105 88 105 62 L105 28 Z"
+    fill="url(#shield-gradient-neon)"
+    stroke="#10b981"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  
+  <!-- Shield inner highlight -->
+  <path
+    d="M60 10 L22 30 L22 62 C22 84 38 102 60 110 C82 102 98 84 98 62 L98 30 Z"
+    fill="url(#highlight-gradient-neon)"
+  />
+  
+  <!-- Sharp accent line with strong glow -->
+  <path
+    d="M15 28 L60 6 L105 28"
+    stroke="#10b981"
+    stroke-width="3"
+    stroke-linecap="round"
+    filter="url(#glow-neon)"
+  />
+  
+  <!-- Dumbbell - Left Weight -->
+  <g filter="url(#glow-neon)">
+    <ellipse
+      cx="35"
+      cy="50"
+      rx="9"
+      ry="13"
+      fill="url(#dumbbell-gradient-neon)"
+      stroke="#10b981"
+      stroke-width="1.5"
+    />
+    <ellipse
+      cx="33"
+      cy="48"
+      rx="4"
+      ry="6"
+      fill="#34d399"
+      opacity="0.6"
+    />
+  </g>
+  
+  <!-- Dumbbell - Right Weight -->
+  <g filter="url(#glow-neon)">
+    <ellipse
+      cx="85"
+      cy="50"
+      rx="9"
+      ry="13"
+      fill="url(#dumbbell-gradient-neon)"
+      stroke="#10b981"
+      stroke-width="1.5"
+    />
+    <ellipse
+      cx="83"
+      cy="48"
+      rx="4"
+      ry="6"
+      fill="#34d399"
+      opacity="0.6"
+    />
+  </g>
+  
+  <!-- Dumbbell - Center Bar -->
+  <rect
+    x="44"
+    y="45"
+    width="32"
+    height="10"
+    rx="2"
+    fill="url(#dumbbell-gradient-neon)"
+    stroke="#10b981"
+    stroke-width="1.5"
+    filter="url(#glow-neon)"
+  />
+  
+  <!-- Center bar highlight -->
+  <rect
+    x="46"
+    y="47"
+    width="28"
+    height="3"
+    rx="1"
+    fill="#34d399"
+    opacity="0.7"
+  />
+  
+  <!-- Bottom accent line -->
+  <path
+    d="M15 62 L60 116 L105 62"
+    stroke="#10b981"
+    stroke-width="1.5"
+    stroke-linecap="round"
+    opacity="0.5"
+  />
+</svg>
+
+
+
+
+
+

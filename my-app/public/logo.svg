@@ -1,0 +1,74 @@
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shield Shape - Premium curved design -->
+  <path
+    d="M60 8 L18 26 L18 58 C18 80 36 100 60 112 C84 100 102 80 102 58 L102 26 Z"
+    fill="#1e3a8a"
+    stroke="#1e3a8a"
+    stroke-width="1.5"
+  />
+  
+  <!-- Shield inner highlight for depth -->
+  <path
+    d="M60 12 L24 28 L24 58 C24 77 38 95 60 106 C82 95 96 77 96 58 L96 28 Z"
+    fill="none"
+    stroke="#3b82f6"
+    stroke-width="1"
+    opacity="0.3"
+  />
+  
+  <!-- Dumbbell - Left Weight (top) -->
+  <ellipse
+    cx="38"
+    cy="48"
+    rx="7"
+    ry="10"
+    fill="#ffffff"
+  />
+  
+  <!-- Dumbbell - Left Weight (bottom) -->
+  <ellipse
+    cx="38"
+    cy="52"
+    rx="7"
+    ry="10"
+    fill="#ffffff"
+  />
+  
+  <!-- Dumbbell - Right Weight (top) -->
+  <ellipse
+    cx="82"
+    cy="48"
+    rx="7"
+    ry="10"
+    fill="#ffffff"
+  />
+  
+  <!-- Dumbbell - Right Weight (bottom) -->
+  <ellipse
+    cx="82"
+    cy="52"
+    rx="7"
+    ry="10"
+    fill="#ffffff"
+  />
+  
+  <!-- Dumbbell - Center Bar -->
+  <rect
+    x="45"
+    y="47"
+    width="30"
+    height="6"
+    rx="3"
+    fill="#ffffff"
+  />
+  
+  <!-- Accent Line - Top of shield (premium detail) -->
+  <path
+    d="M18 26 L60 8 L102 26"
+    stroke="#3b82f6"
+    stroke-width="2"
+    stroke-linecap="round"
+    opacity="0.8"
+  />
+</svg>
+
