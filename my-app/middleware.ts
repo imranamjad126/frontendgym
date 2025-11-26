@@ -61,8 +61,19 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Public routes
-  if (pathname === '/login' || pathname === '/setup-admin' || pathname === '/test-auth' || pathname === '/verify-setup' || pathname === '/admin/auto-fix' || pathname.startsWith('/_next') || pathname.startsWith('/api/auth')) {
+  // Public routes (accessible without login)
+  const publicRoutes = [
+    '/login',
+    '/setup-admin',
+    '/test-auth',
+    '/verify-setup',
+    '/admin/auto-fix', // Make auto-fix accessible without login
+    '/auto-fix' // Alternative route for auto-fix
+  ];
+  
+  const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(route + '/'));
+  
+  if (isPublicRoute || pathname.startsWith('/_next') || pathname.startsWith('/api/auth')) {
     if (session && pathname === '/login') {
       return NextResponse.redirect(new URL('/', request.url));
     }
