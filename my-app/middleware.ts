@@ -62,7 +62,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Public routes
-  if (pathname === '/login' || pathname === '/setup-admin' || pathname === '/test-auth' || pathname === '/verify-setup' || pathname.startsWith('/_next') || pathname.startsWith('/api/auth')) {
+  if (pathname === '/login' || pathname === '/setup-admin' || pathname === '/test-auth' || pathname === '/verify-setup' || pathname === '/admin/auto-fix' || pathname.startsWith('/_next') || pathname.startsWith('/api/auth')) {
     if (session && pathname === '/login') {
       return NextResponse.redirect(new URL('/', request.url));
     }
