@@ -1,0 +1,104 @@
+═══════════════════════════════════════════════════════════════
+ADMIN USER SETUP - STEP BY STEP (FIX "Invalid login credentials")
+═══════════════════════════════════════════════════════════════
+
+PROBLEM: "Invalid login credentials" means admin user doesn't exist yet.
+
+SOLUTION: Follow these EXACT steps:
+
+───────────────────────────────────────────────────────────────
+STEP 1: CREATE USER IN SUPABASE AUTH
+───────────────────────────────────────────────────────────────
+
+1. Open: https://supabase.com/dashboard
+2. Select your project
+3. Go to: Authentication → Users (left sidebar)
+4. Click: "Add User" button (top right)
+5. Select: "Create new user"
+6. Fill in:
+   ┌─────────────────────────────────────────┐
+   │ Email: fitnesswithimran1@gmail.com     │
+   │ Password: Aa543543@                    │
+   │ Auto Confirm User: ✅ YES (IMPORTANT!) │
+   └─────────────────────────────────────────┘
+7. Click: "Create user"
+8. ✅ User created! Copy the User ID (you'll see it in the list)
+
+───────────────────────────────────────────────────────────────
+STEP 2: CONFIRM EMAIL (CRITICAL!)
+───────────────────────────────────────────────────────────────
+
+1. In the Users list, click on the user you just created
+2. Find "Email Confirmed" field
+3. Set it to: ✅ TRUE/YES
+4. Save changes
+
+───────────────────────────────────────────────────────────────
+STEP 3: CREATE USER RECORD IN DATABASE
+───────────────────────────────────────────────────────────────
+
+1. Go to: SQL Editor (left sidebar)
+2. Click: "New Query"
+3. Copy and paste this SQL:
+
+   INSERT INTO users (id, email, role, gym_id)
+   VALUES (
+     (SELECT id FROM auth.users WHERE email = 'fitnesswithimran1@gmail.com'),
+     'fitnesswithimran1@gmail.com',
+     'ADMIN',
+     NULL
+   )
+   ON CONFLICT (id) DO UPDATE
+   SET role = 'ADMIN', gym_id = NULL;
+
+4. Click: "Run" (or press Ctrl+Enter)
+5. ✅ Should show: "Success. No rows returned"
+
+───────────────────────────────────────────────────────────────
+STEP 4: VERIFY SETUP
+───────────────────────────────────────────────────────────────
+
+Run this SQL to verify:
+
+   SELECT * FROM users WHERE email = 'fitnesswithimran1@gmail.com';
+
+Expected result:
+   - id: (UUID)
+   - email: fitnesswithimran1@gmail.com
+   - role: ADMIN
+   - gym_id: NULL
+
+───────────────────────────────────────────────────────────────
+STEP 5: LOGIN
+───────────────────────────────────────────────────────────────
+
+1. Go to: http://localhost:3000/login
+2. Enter:
+   Email: fitnesswithimran1@gmail.com
+   Password: Aa543543@
+3. Click: "Sign In"
+4. ✅ Should redirect to admin dashboard!
+
+───────────────────────────────────────────────────────────────
+TROUBLESHOOTING
+───────────────────────────────────────────────────────────────
+
+❌ Still getting "Invalid login credentials"?
+
+Check:
+✅ User exists in Authentication → Users?
+✅ Email Confirmed = TRUE?
+✅ Password is exactly: Aa543543@
+✅ users table has record? (run SELECT query above)
+✅ Database setup done? (run supabase/01-multi-user-setup.sql)
+
+❌ "User account not found" error?
+
+→ users table record missing. Run STEP 3 again.
+
+❌ Can't see Authentication menu?
+
+→ Make sure you're logged into Supabase Dashboard
+
+───────────────────────────────────────────────────────────────
+
