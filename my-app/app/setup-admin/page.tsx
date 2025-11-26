@@ -65,17 +65,26 @@ export default function SetupAdminPage() {
       }
 
       // Step 2: Confirm email (for development, we'll update directly)
-      // In production, user should confirm via email
-      const { error: confirmError } = await supabase.auth.admin.updateUserById(
-        authData.user.id,
-        { email_confirm: true }
-      );
+      // Note: This requires service role key, so it might fail
+      // User should confirm via Supabase Dashboard if this fails
+      try {
+        const { error: confirmError } = await supabase.auth.admin.updateUserById(
+          authData.user.id,
+          { email_confirm: true }
+        );
 
-      if (confirmError) {
-        console.warn('Could not auto-confirm email (requires admin access):', confirmError);
+        if (confirmError) {
+          console.warn('Could not auto-confirm email (requires service role):', confirmError);
+          setMessage({ 
+            type: 'error', 
+            text: 'User created! Please confirm email in Supabase Dashboard → Authentication → Users → Click user → Set "Email Confirmed" to true' 
+          });
+        }
+      } catch (e) {
+        console.warn('Admin API not available, user needs manual confirmation');
         setMessage({ 
           type: 'error', 
-          text: 'User created but email confirmation failed. Please confirm email in Supabase Dashboard → Authentication → Users' 
+          text: 'User created! IMPORTANT: Go to Supabase Dashboard → Authentication → Users → Find your user → Set "Email Confirmed" to true, then try login again.' 
         });
       }
 
