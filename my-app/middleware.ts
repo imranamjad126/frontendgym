@@ -64,10 +64,10 @@ export async function middleware(request: NextRequest) {
       );
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // Fetch role to redirect appropriately
+        // Fetch role and email to redirect appropriately
         const { data: userData } = await supabase
           .from('users')
-          .select('role')
+          .select('role, email')
           .eq('id', session.user.id)
           .single();
         
