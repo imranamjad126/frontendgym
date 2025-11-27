@@ -1,46 +1,19 @@
-'use client';
+"use client";
 
-import { usePathname } from 'next/navigation';
-import { Layout } from './Layout';
-import { useAuth } from '@/lib/contexts/AuthContext';
+import Layout from "./Layout";
+import { usePathname } from "next/navigation";
 
-const publicRoutes = [
-  '/login',
-  '/login-diagnostic',
-  '/setup-admin',
-  '/test-auth',
-  '/verify-setup',
-  '/auto-fix',
-  '/admin/auto-fix',
-  '/auto-fix-complete'
-];
-
-export function ConditionalLayout({ children }: { children: React.ReactNode }) {
+export default function ConditionalLayout({ children }) {
   const pathname = usePathname();
-  const { loading } = useAuth();
-  
-  // Check if current route is public
-  const isPublicRoute = publicRoutes.some(route => {
-    if (pathname === route) return true;
-    if (pathname.startsWith(route + '/')) return true;
-    return false;
-  });
 
-  // Public routes: render without Layout
-  if (isPublicRoute) {
-    return <>{children}</>;
+  // Pages that MUST NOT show Navbar / Sidebar
+  const publicRoutes = ["/login", "/auth", "/forgot-password"];
+
+  const isPublic = publicRoutes.includes(pathname);
+
+  if (isPublic) {
+    return <>{children}</>;   // NO NAVBAR
   }
 
-  // Protected routes: show loading state, then Layout
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-slate-500">Loading...</div>
-      </div>
-    );
-  }
-
-  return <Layout>{children}</Layout>;
+  return <Layout>{children}</>;  // ONLY PROTECTED ROUTES
 }
-
-

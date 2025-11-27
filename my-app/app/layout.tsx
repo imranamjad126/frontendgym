@@ -1,73 +1,21 @@
-"use client";
-
-import { usePathname } from "next/navigation";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Sidebar from "@/components/Sidebar";
-import { AuthProvider, useAuth } from "@/lib/contexts/AuthContext";
 
-function LayoutContent({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const { loading, session } = useAuth();
+import { AuthProvider } from "@/lib/contexts/AuthContext";
 
-  const publicRoutes = ["/login", "/register", "/auth/reset"];
-  const isPublic = publicRoutes.some(route => 
-    pathname === route || pathname.startsWith(route + "/")
-  );
+import ConditionalLayout from "@/components/layout/ConditionalLayout";
 
-  // Show loader during auth check (prevents layout flash)
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 mb-4"></div>
-          <div className="text-slate-500">Loading...</div>
-        </div>
-      </div>
-    );
-  }
+export const metadata = {
+  title: "Gym Manager",
+};
 
-  // Public routes: no navbar/sidebar (login page should never show layout)
-  if (isPublic) {
-    return <>{children}</>;
-  }
-
-  // Protected routes: show navbar + sidebar
-  // Session should exist (middleware handles redirect if not)
-  if (session) {
-    return (
-      <div className="flex">
-        <Sidebar />
-        <div className="flex-1">
-          <Navbar />
-          {children}
-        </div>
-      </div>
-    );
-  }
-
-  // If no session and not public, show loader (middleware will redirect)
-  // This prevents flash of wrong layout
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="text-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 mb-4"></div>
-        <div className="text-slate-500">Redirecting...</div>
-      </div>
-    </div>
-  );
-}
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="antialiased" suppressHydrationWarning>
+      <body>
         <AuthProvider>
-          <LayoutContent>{children}</LayoutContent>
+          <ConditionalLayout>
+            {children}
+          </ConditionalLayout>
         </AuthProvider>
       </body>
     </html>
