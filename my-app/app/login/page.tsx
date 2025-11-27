@@ -44,34 +44,9 @@ export default function LoginPage() {
       const { supabase } = await import('@/lib/auth/client');
       await supabase.auth.refreshSession();
       
-      // Fetch user data immediately after successful login
-      const { getCurrentUser } = await import('@/lib/auth/auth');
-      const user = await getCurrentUser();
-      
-      if (user) {
-        console.log('✅ Login successful, user data:', { 
-          email: user.email, 
-          role: user.role 
-        });
-        
-        // Redirect based on role/email
-        // Super Admin (OWNER with specific email) → /admin
-        if (user.email === 'fitnesswithimran1@gmail.com') {
-          router.push('/admin');
-        } else if (user.role === 'OWNER') {
-          router.push('/owner');
-        } else if (user.role === 'STAFF') {
-          router.push('/staff');
-        } else {
-          // Fallback to home page
-          router.push('/');
-        }
-        router.refresh();
-      } else {
-        // If user data not available, redirect to home (it will handle redirect)
-        router.push('/');
-        router.refresh();
-      }
+      // Redirect to dashboard after successful login
+      router.push('/dashboard');
+      router.refresh();
     } catch (err: any) {
       console.error('❌ Login error:', err);
       setError(err.message || 'Failed to sign in. Please check your credentials.');
