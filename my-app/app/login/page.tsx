@@ -87,6 +87,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             {error && (
               <div 
+                id="error-message"
                 className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded"
                 role="alert"
                 aria-live="polite"
