@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
         {
           id: authUser.id,
           email: ADMIN_EMAIL,
-          role: 'ADMIN',
+          role: 'OWNER',
           gym_id: null,
         },
         {
