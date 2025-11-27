@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 
 export function Header() {
-  const { user, logout, loading } = useAuth();
+  const { user, logout, loading, session } = useAuth();
   
   // Don't redirect, just show header
   if (loading) {
