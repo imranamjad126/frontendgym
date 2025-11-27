@@ -81,10 +81,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    await signOut();
-    setUser(null);
-    setSession(null);
-    router.push('/login');
+    try {
+      // Sign out from Supabase (clears session and cookies)
+      await signOut();
+      // Clear local state
+      setUser(null);
+      setSession(null);
+      // Redirect to login
+      router.push('/login');
+      // Force refresh to ensure cookies are cleared
+      router.refresh();
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Even if signOut fails, clear local state and redirect
+      setUser(null);
+      setSession(null);
+      router.push('/login');
+      router.refresh();
+    }
   };
 
   const refresh = async () => {

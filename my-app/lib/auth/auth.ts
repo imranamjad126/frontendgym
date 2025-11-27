@@ -62,10 +62,13 @@ export async function signIn(email: string, password: string) {
 }
 
 export async function signOut() {
+  // Sign out from Supabase (this clears session and cookies)
   const { error } = await supabase.auth.signOut();
   if (error) {
     throw error;
   }
+  // Note: Supabase SSR automatically clears cookies on signOut()
+  // The createBrowserClient handles cookie clearing automatically
 }
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
