@@ -146,7 +146,7 @@ export default function LoginDiagnosticPage() {
               status: '❌ FAIL',
               message: 'User does not exist OR credentials are incorrect',
               details: `Error: ${authError.message}`,
-              fix: 'Create user in Supabase Dashboard → Authentication → Users → Add User'
+              fix: 'Click "Create Admin User" button below to auto-create the user'
             });
           } else if (authError.message.includes('Email not confirmed')) {
             checks.push({
@@ -310,6 +310,34 @@ export default function LoginDiagnosticPage() {
     }
   };
 
+  const createAdminUser = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/create-admin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`✅ Admin User Created Successfully!\n\nSteps completed:\n${result.steps.map((s: any) => `- ${s.step}: ${s.message}`).join('\n')}\n\nYou can now try logging in!`);
+        // Refresh diagnostics
+        await runDiagnostics();
+      } else {
+        const errorSteps = result.steps?.filter((s: any) => s.status === 'error' || s.status === 'warning');
+        const errorMessages = errorSteps?.map((s: any) => `${s.step}: ${s.message}${s.fix ? `\nFix: ${s.fix}` : ''}`).join('\n\n');
+        alert(`⚠️ Admin User Creation:\n\n${errorMessages || result.error || 'Failed to create admin user'}\n\nPlease check the steps above or create manually in Supabase Dashboard.`);
+      }
+    } catch (err: any) {
+      alert(`❌ Error: ${err.message}\n\nPlease create user manually:\n1. Go to Supabase Dashboard → Authentication → Users\n2. Click "Add User" → "Create new user"\n3. Email: ${ADMIN_EMAIL}\n4. Password: ${ADMIN_PASSWORD}\n5. Auto Confirm: YES`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-4">
       <div className="max-w-4xl mx-auto">
@@ -338,12 +366,20 @@ export default function LoginDiagnosticPage() {
                 />
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button onClick={runDiagnostics} disabled={loading}>
                 {loading ? 'Running...' : '🔍 Run Full Diagnostics'}
               </Button>
               <Button onClick={testLogin} disabled={loading} variant="outline">
                 🧪 Test Login
+              </Button>
+              <Button 
+                onClick={createAdminUser} 
+                disabled={loading} 
+                variant="default"
+                className="bg-green-600 hover:bg-green-700"
+              >
+                ➕ Create Admin User
               </Button>
             </div>
           </CardContent>
