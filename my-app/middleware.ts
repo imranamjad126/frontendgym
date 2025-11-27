@@ -62,28 +62,26 @@ export async function middleware(request: NextRequest) {
           },
         }
       );
+      
       const { data: { session } } = await supabase.auth.getSession();
+      
       if (session) {
-        // Fetch role and email to redirect appropriately
         const { data: userData } = await supabase
           .from('users')
           .select('role, email')
           .eq('id', session.user.id)
           .single();
-        
+
         const userRole = userData?.role;
         const userEmail = userData?.email;
         const isSuperAdmin = userEmail === 'fitnesswithimran1@gmail.com';
-        
-        // Redirect based on role/email
-        if (isSuperAdmin) {
-          return NextResponse.redirect(new URL('/admin', request.url));
-        } else if (userRole === 'OWNER') {
-          return NextResponse.redirect(new URL('/owner', request.url));
-        } else if (userRole === 'STAFF') {
-          return NextResponse.redirect(new URL('/staff', request.url));
-        }
-        return NextResponse.redirect(new URL('/', request.url));
+
+        let redirectUrl = '/';
+        if (isSuperAdmin) redirectUrl = '/admin';
+        else if (userRole === 'OWNER') redirectUrl = '/owner';
+        else if (userRole === 'STAFF') redirectUrl = '/staff';
+
+        return NextResponse.redirect(new URL(redirectUrl, request.url));
       }
     }
     return response;

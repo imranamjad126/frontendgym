@@ -8,6 +8,7 @@ import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils/cn';
 import { format } from 'date-fns';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 // Mobile DateTime component
 function MobileDateTime() {
@@ -42,6 +43,16 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { loading } = useAuth();
+
+  // Prevent rendering protected routes until session is ready
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-slate-500">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
