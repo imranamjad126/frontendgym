@@ -72,8 +72,13 @@ export async function middleware(request: NextRequest) {
           .single();
         
         const userRole = userData?.role;
-        if (userRole === 'ADMIN') {
+        const userEmail = userData?.email;
+        const isSuperAdmin = userEmail === 'fitnesswithimran1@gmail.com';
+        
+        if (isSuperAdmin) {
           return NextResponse.redirect(new URL('/admin', request.url));
+        } else if (userRole === 'OWNER') {
+          return NextResponse.redirect(new URL('/owner', request.url));
         } else if (userRole === 'STAFF') {
           return NextResponse.redirect(new URL('/staff', request.url));
         }

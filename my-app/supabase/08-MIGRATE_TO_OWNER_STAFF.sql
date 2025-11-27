@@ -48,6 +48,17 @@ DROP POLICY IF EXISTS "Admins can manage all payments" ON payments;
 -- GYMS POLICIES
 -- ============================================
 
+-- Super Admin (fitnesswithimran1@gmail.com) can manage all gyms
+CREATE POLICY "Super Admin can manage all gyms"
+ON gyms FOR ALL
+TO authenticated
+USING (
+  EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND email = 'fitnesswithimran1@gmail.com')
+)
+WITH CHECK (
+  EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND email = 'fitnesswithimran1@gmail.com')
+);
+
 -- Owners can view and manage their own gym
 CREATE POLICY "Owners can manage their gym"
 ON gyms FOR ALL
@@ -70,6 +81,17 @@ USING (
 -- ============================================
 -- USERS POLICIES
 -- ============================================
+
+-- Super Admin can view and manage all users
+CREATE POLICY "Super Admin can manage all users"
+ON users FOR ALL
+TO authenticated
+USING (
+  EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND email = 'fitnesswithimran1@gmail.com')
+)
+WITH CHECK (
+  EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND email = 'fitnesswithimran1@gmail.com')
+);
 
 -- Owners can view users from their gym
 CREATE POLICY "Owners can view their gym users"

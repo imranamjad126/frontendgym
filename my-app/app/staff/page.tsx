@@ -17,7 +17,7 @@ export default function StaffDashboard() {
       router.push('/login');
       return;
     }
-    if (!loading && user && user.role !== 'STAFF' && user.role !== 'ADMIN') {
+    if (!loading && user && user.role !== 'STAFF' && user.role !== 'OWNER') {
       router.push('/unauthorized');
       return;
     }
@@ -31,7 +31,7 @@ export default function StaffDashboard() {
     );
   }
 
-  if (!user || (user.role !== 'STAFF' && user.role !== 'ADMIN')) {
+  if (!user || (user.role !== 'STAFF' && user.role !== 'OWNER')) {
     return null;
   }
 
