@@ -100,6 +100,12 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   }
 }
 
+// Helper function to get raw auth user (for middleware compatibility)
+export async function getAuthUser() {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
+}
+
 export async function getSession() {
   const { data: { session } } = await supabase.auth.getSession();
   return session;

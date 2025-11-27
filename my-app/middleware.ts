@@ -35,7 +35,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/') ||
     isPublicRoute
   ) {
-    // If logged in and trying to access login page, redirect to home
+    // If logged in and trying to access login page, redirect based on role
     if (pathname === '/login' || pathname === '/setup-admin') {
       const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -75,6 +75,7 @@ export async function middleware(request: NextRequest) {
         const userEmail = userData?.email;
         const isSuperAdmin = userEmail === 'fitnesswithimran1@gmail.com';
         
+        // Redirect based on role/email
         if (isSuperAdmin) {
           return NextResponse.redirect(new URL('/admin', request.url));
         } else if (userRole === 'OWNER') {

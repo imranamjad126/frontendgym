@@ -40,6 +40,10 @@ export default function LoginPage() {
 
       const signInResult = await signIn(trimmedEmail, trimmedPassword);
       
+      // Force session refresh to ensure UI updates
+      const { supabase } = await import('@/lib/auth/client');
+      await supabase.auth.refreshSession();
+      
       // Fetch user data immediately after successful login
       const { getCurrentUser } = await import('@/lib/auth/auth');
       const user = await getCurrentUser();
