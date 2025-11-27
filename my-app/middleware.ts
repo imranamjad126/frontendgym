@@ -11,32 +11,32 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // PUBLIC ROUTES - Check FIRST before any auth checks
+  // Public routes (no auth needed)
   const publicRoutes = [
     '/login',
-    '/login-diagnostic', // Login diagnostic tool
+    '/login-diagnostic',
     '/setup-admin',
     '/test-auth',
     '/verify-setup',
     '/auto-fix',
     '/admin/auto-fix',
-    '/auto-fix-complete' // Complete diagnostic page
+    '/auto-fix-complete'
   ];
-  
-  // Check if it's a public route (exact match or starts with)
+
   const isPublicRoute = publicRoutes.some(route => {
     if (pathname === route) return true;
     if (pathname.startsWith(route + '/')) return true;
     return false;
   });
-  
-  // Allow Next.js internal routes and API routes
-  if (pathname.startsWith('/_next') || 
-      pathname.startsWith('/api/auth') ||
-      pathname.startsWith('/api/') ||
-      isPublicRoute) {
+
+  // Allow Next.js internal routes + API + public routes
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api/') ||
+    isPublicRoute
+  ) {
     // If logged in and trying to access login page, redirect to home
-    if (pathname === '/login') {
+    if (pathname === '/login' || pathname === '/setup-admin') {
       const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -46,51 +46,44 @@ export async function middleware(request: NextRequest) {
               return request.cookies.get(name)?.value;
             },
             set(name: string, value: string, options: any) {
-              request.cookies.set({
-                name,
-                value,
-                ...options,
-              });
+              request.cookies.set({ name, value, ...options });
               response = NextResponse.next({
-                request: {
-                  headers: request.headers,
-                },
+                request: { headers: request.headers },
               });
-              response.cookies.set({
-                name,
-                value,
-                ...options,
-              });
+              response.cookies.set({ name, value, ...options });
             },
             remove(name: string, options: any) {
-              request.cookies.set({
-                name,
-                value: '',
-                ...options,
-              });
+              request.cookies.set({ name, value: '', ...options });
               response = NextResponse.next({
-                request: {
-                  headers: request.headers,
-                },
+                request: { headers: request.headers },
               });
-              response.cookies.set({
-                name,
-                value: '',
-                ...options,
-              });
+              response.cookies.set({ name, value: '', ...options });
             },
           },
         }
       );
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
+        // Fetch role to redirect appropriately
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        
+        const userRole = userData?.role;
+        if (userRole === 'ADMIN') {
+          return NextResponse.redirect(new URL('/admin', request.url));
+        } else if (userRole === 'STAFF') {
+          return NextResponse.redirect(new URL('/staff', request.url));
+        }
         return NextResponse.redirect(new URL('/', request.url));
       }
     }
     return response;
   }
 
-  // PROTECTED ROUTES - require authentication
+  // Initialize Supabase server session
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -100,52 +93,32 @@ export async function middleware(request: NextRequest) {
           return request.cookies.get(name)?.value;
         },
         set(name: string, value: string, options: any) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          });
+          request.cookies.set({ name, value, ...options });
           response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
+            request: { headers: request.headers },
           });
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          });
+          response.cookies.set({ name, value, ...options });
         },
         remove(name: string, options: any) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
+          request.cookies.set({ name, value: '', ...options });
           response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
+            request: { headers: request.headers },
           });
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
+          response.cookies.set({ name, value: '', ...options });
         },
       },
     }
   );
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const { data: { session } } = await supabase.auth.getSession();
 
+  // BLOCK UNAUTHENTICATED USERS from ALL protected content
+  // This includes / (root) which is NOT in publicRoutes
   if (!session) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Fetch user role
+  // Fetch role for RBAC
   const { data: userData } = await supabase
     .from('users')
     .select('role')
@@ -154,16 +127,17 @@ export async function middleware(request: NextRequest) {
 
   const userRole = userData?.role;
 
-  // Admin routes (exclude /admin/auto-fix which is already public)
-  if (pathname.startsWith('/admin') && 
-      pathname !== '/admin/auto-fix' && 
-      !pathname.startsWith('/admin/auto-fix/')) {
+  // Admin-only routes
+  if (
+    pathname.startsWith('/admin') &&
+    pathname !== '/admin/auto-fix'
+  ) {
     if (userRole !== 'ADMIN') {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
   }
 
-  // Staff routes
+  // Staff-only routes
   if (pathname.startsWith('/staff')) {
     if (userRole !== 'STAFF' && userRole !== 'ADMIN') {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
