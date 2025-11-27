@@ -340,3 +340,4 @@ document.cookie.split(';').forEach(c => console.log(c.trim()));
 4. Check Network tab for Set-Cookie headers
 5. Test session persistence
 
+

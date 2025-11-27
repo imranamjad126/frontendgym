@@ -187,3 +187,4 @@ Added fallback for unknown roles:
 **Issue**: Login stuck on "Signing in..." for OWNER role
 **Solution**: Fetch user data immediately after signIn and redirect directly
 
+
