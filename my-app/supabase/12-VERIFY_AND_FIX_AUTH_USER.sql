@@ -105,29 +105,52 @@ BEGIN
   WHERE email = super_admin_email
   LIMIT 1;
   
+  -- First, ensure constraint allows OWNER with NULL gym_id
+  IF EXISTS (
+    SELECT 1 FROM information_schema.table_constraints 
+    WHERE constraint_name = 'staff_must_have_gym' 
+    AND table_name = 'users'
+  ) THEN
+    -- Drop and recreate constraint to allow OWNER with NULL
+    ALTER TABLE users DROP CONSTRAINT IF EXISTS staff_must_have_gym;
+    ALTER TABLE users 
+    ADD CONSTRAINT staff_must_have_gym 
+    CHECK (
+      (role = 'STAFF' AND gym_id IS NOT NULL) OR
+      (role = 'OWNER')
+    );
+    RAISE NOTICE '✅ Fixed constraint to allow OWNER with NULL gym_id';
+  END IF;
+  
   IF users_table_id IS NULL THEN
     -- Create record with auth user ID
     INSERT INTO users (id, email, role, gym_id)
     VALUES (auth_user_id, super_admin_email, 'OWNER'::user_role, NULL)
     ON CONFLICT (id) DO UPDATE 
-    SET email = super_admin_email, role = 'OWNER'::user_role;
+    SET email = super_admin_email, role = 'OWNER'::user_role, gym_id = NULL;
     
-    RAISE NOTICE '✅ Created users table record with auth user ID';
+    RAISE NOTICE '✅ Created users table record with auth user ID (gym_id = NULL)';
   ELSIF users_table_id != auth_user_id THEN
     -- ID mismatch - fix it
     RAISE NOTICE '❌ ID MISMATCH: Fixing...';
     DELETE FROM users WHERE email = super_admin_email;
     INSERT INTO users (id, email, role, gym_id)
     VALUES (auth_user_id, super_admin_email, 'OWNER'::user_role, NULL);
-    RAISE NOTICE '✅ Fixed ID mismatch';
-  ELSIF users_role != 'OWNER' THEN
-    -- Role mismatch - fix it
-    UPDATE users 
-    SET role = 'OWNER'::user_role 
-    WHERE email = super_admin_email;
-    RAISE NOTICE '✅ Updated role to OWNER';
+    RAISE NOTICE '✅ Fixed ID mismatch (gym_id = NULL)';
   ELSE
-    RAISE NOTICE '✅ users table record is correct (ID matches, role is OWNER)';
+    -- Update existing record to ensure correct values
+    UPDATE users 
+    SET email = super_admin_email, 
+        role = 'OWNER'::user_role,
+        gym_id = NULL
+    WHERE email = super_admin_email 
+      AND (role::text != 'OWNER' OR gym_id IS NOT NULL);
+    
+    IF FOUND THEN
+      RAISE NOTICE '✅ Updated record (role = OWNER, gym_id = NULL)';
+    ELSE
+      RAISE NOTICE '✅ users table record is correct (ID matches, role is OWNER, gym_id is NULL)';
+    END IF;
   END IF;
 END $$;
 
