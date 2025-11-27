@@ -243,23 +243,50 @@ DECLARE
   auth_user_id UUID;
   existing_user_id UUID;
   has_fk_constraint BOOLEAN := false;
+  auth_users_exists BOOLEAN := false;
 BEGIN
   -- Only proceed if users table exists
   IF EXISTS (
     SELECT 1 FROM information_schema.tables 
     WHERE table_schema = 'public' AND table_name = 'users'
   ) THEN
-    -- Check if FK constraint exists on users.id
+    -- Check if auth.users table exists
     SELECT EXISTS (
-      SELECT 1 FROM information_schema.table_constraints tc
+      SELECT 1 FROM information_schema.tables 
+      WHERE table_schema = 'auth' AND table_name = 'users'
+    ) INTO auth_users_exists;
+    
+    -- Check if FK constraint exists on users.id → auth.users
+    -- More robust check: look for any FK on users.id that references auth schema
+    SELECT EXISTS (
+      SELECT 1 
+      FROM information_schema.table_constraints tc
       JOIN information_schema.key_column_usage kcu 
         ON tc.constraint_name = kcu.constraint_name
+        AND tc.table_schema = kcu.table_schema
+      JOIN information_schema.constraint_column_usage ccu
+        ON ccu.constraint_name = tc.constraint_name
+        AND ccu.table_schema = tc.table_schema
       WHERE tc.table_schema = 'public' 
         AND tc.table_name = 'users'
         AND tc.constraint_type = 'FOREIGN KEY'
         AND kcu.column_name = 'id'
-        AND tc.constraint_name LIKE '%auth%'
+        AND ccu.table_schema = 'auth'
     ) INTO has_fk_constraint;
+    
+    -- If auth.users exists, assume FK constraint might exist (safer approach)
+    -- This prevents FK violations even if constraint detection fails
+    IF auth_users_exists AND NOT has_fk_constraint THEN
+      -- Double-check: if auth.users exists, FK constraint likely exists
+      -- Check constraint name patterns
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE table_schema = 'public'
+          AND table_name = 'users'
+          AND constraint_type = 'FOREIGN KEY'
+          AND (constraint_name LIKE '%id%' OR constraint_name LIKE '%auth%' OR constraint_name LIKE '%user%')
+      ) INTO has_fk_constraint;
+    END IF;
     
     -- Check if Super Admin already exists in users table
     SELECT id INTO existing_user_id
@@ -276,11 +303,8 @@ BEGIN
       RAISE NOTICE '✅ Super Admin already exists, updated role to OWNER';
     ELSE
       -- Super Admin doesn't exist, need to insert
-      -- First, try to find auth user
-      IF EXISTS (
-        SELECT 1 FROM information_schema.tables 
-        WHERE table_schema = 'auth' AND table_name = 'users'
-      ) THEN
+      -- CRITICAL: Always check auth.users first if it exists
+      IF auth_users_exists THEN
         SELECT id INTO auth_user_id 
         FROM auth.users 
         WHERE email = super_admin_email 
@@ -288,25 +312,27 @@ BEGIN
       END IF;
       
       IF auth_user_id IS NOT NULL THEN
-        -- Auth user exists, use that ID (safe for FK)
-        -- Handle conflict on id (primary key) - if id exists with different email, update it
+        -- Auth user exists, use that ID (FK-safe)
         INSERT INTO users (id, email, role, gym_id)
         VALUES (auth_user_id, super_admin_email, 'OWNER'::user_role, NULL)
         ON CONFLICT (id) DO UPDATE 
         SET email = super_admin_email, role = 'OWNER'::user_role
         WHERE users.role::text != 'OWNER' OR users.email != super_admin_email;
         RAISE NOTICE '✅ Super Admin inserted/updated with auth user ID';
-      ELSIF has_fk_constraint THEN
-        -- FK constraint exists but auth user not found - cannot insert
-        RAISE NOTICE '⚠️ Super Admin auth user not found and FK constraint exists. Please create auth user first in Supabase Auth.';
+      ELSIF auth_users_exists OR has_fk_constraint THEN
+        -- Auth.users exists OR FK constraint exists, but auth user not found
+        -- DO NOT use random UUID - will cause FK violation
+        RAISE NOTICE '⚠️ Super Admin auth user not found. FK constraint exists or auth.users table exists.';
+        RAISE NOTICE '⚠️ Please create auth user first: Go to Supabase Dashboard → Authentication → Users → Add User';
+        RAISE NOTICE '⚠️ Email: fitnesswithimran1@gmail.com, Password: Aa543543@, Auto Confirm: YES';
       ELSE
-        -- No FK constraint, safe to use random UUID
+        -- No auth.users table AND no FK constraint - safe to use random UUID
         INSERT INTO users (id, email, role, gym_id)
         VALUES (gen_random_uuid(), super_admin_email, 'OWNER'::user_role, NULL)
         ON CONFLICT (email) DO UPDATE 
         SET role = 'OWNER'::user_role
         WHERE users.role::text != 'OWNER';
-        RAISE NOTICE '✅ Super Admin inserted with random UUID (no FK constraint)';
+        RAISE NOTICE '✅ Super Admin inserted with random UUID (no FK constraint, no auth.users)';
       END IF;
     END IF;
   ELSE
