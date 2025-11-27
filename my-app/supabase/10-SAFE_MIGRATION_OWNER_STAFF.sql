@@ -289,11 +289,13 @@ BEGIN
       
       IF auth_user_id IS NOT NULL THEN
         -- Auth user exists, use that ID (safe for FK)
+        -- Handle conflict on id (primary key) - if id exists with different email, update it
         INSERT INTO users (id, email, role, gym_id)
         VALUES (auth_user_id, super_admin_email, 'OWNER'::user_role, NULL)
         ON CONFLICT (id) DO UPDATE 
-        SET email = super_admin_email, role = 'OWNER'::user_role;
-        RAISE NOTICE '✅ Super Admin inserted with auth user ID';
+        SET email = super_admin_email, role = 'OWNER'::user_role
+        WHERE users.role::text != 'OWNER' OR users.email != super_admin_email;
+        RAISE NOTICE '✅ Super Admin inserted/updated with auth user ID';
       ELSIF has_fk_constraint THEN
         -- FK constraint exists but auth user not found - cannot insert
         RAISE NOTICE '⚠️ Super Admin auth user not found and FK constraint exists. Please create auth user first in Supabase Auth.';
@@ -302,7 +304,8 @@ BEGIN
         INSERT INTO users (id, email, role, gym_id)
         VALUES (gen_random_uuid(), super_admin_email, 'OWNER'::user_role, NULL)
         ON CONFLICT (email) DO UPDATE 
-        SET role = 'OWNER'::user_role;
+        SET role = 'OWNER'::user_role
+        WHERE users.role::text != 'OWNER';
         RAISE NOTICE '✅ Super Admin inserted with random UUID (no FK constraint)';
       END IF;
     END IF;
