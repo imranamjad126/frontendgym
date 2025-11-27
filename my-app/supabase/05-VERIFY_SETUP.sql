@@ -129,3 +129,4 @@ SELECT
   'If users table record missing, run:' as fix_type,
   'INSERT INTO users (id, email, role, gym_id) VALUES ((SELECT id FROM auth.users WHERE email = ''fitnesswithimran1@gmail.com''), ''fitnesswithimran1@gmail.com'', ''ADMIN'', NULL) ON CONFLICT (id) DO UPDATE SET role = ''ADMIN'', gym_id = NULL;' as sql_command;
 
+

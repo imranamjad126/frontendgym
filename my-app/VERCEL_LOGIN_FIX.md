@@ -147,3 +147,4 @@ SET role = 'ADMIN', gym_id = NULL;
 
 **Ye steps follow karne ke baad Vercel par login kaam karega!**
 
+

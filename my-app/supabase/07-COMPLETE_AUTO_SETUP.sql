@@ -127,3 +127,4 @@ SELECT
     ELSE '❌ members.gym_id column missing'
   END as gym_id_column;
 
+

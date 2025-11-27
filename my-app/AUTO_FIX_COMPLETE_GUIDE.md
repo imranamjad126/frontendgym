@@ -193,3 +193,4 @@ If issues persist:
 3. Check Supabase logs
 4. Run diagnostics: https://mynew-frontendgym.vercel.app/auto-fix
 
+

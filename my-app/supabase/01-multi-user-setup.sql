@@ -357,3 +357,4 @@ SELECT 'Tables created:' as info, tablename FROM pg_tables WHERE schemaname = 'p
 SELECT 'RLS enabled:' as info, tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename;
 
 
+

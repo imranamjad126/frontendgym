@@ -167,3 +167,4 @@ Expected: `role = 'ADMIN'`, `gym_id = NULL`
 
 **System ab multi-user ready hai!** 🎉
 
+

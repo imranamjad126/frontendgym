@@ -50,3 +50,4 @@ echo "1. Wait for Vercel deployment to complete"
 echo "2. Test login at: https://mynew-frontendgym.vercel.app/login"
 echo "3. Use credentials: fitnesswithimran1@gmail.com / Aa543543@"
 
+

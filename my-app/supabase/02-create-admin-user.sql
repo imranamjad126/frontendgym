@@ -30,3 +30,4 @@ SET role = 'ADMIN', gym_id = NULL;
 SELECT '✅ Admin user created!' as status;
 
 
+

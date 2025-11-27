@@ -179,3 +179,4 @@ SET role = 'ADMIN', gym_id = NULL;
    - "Test Sign In" click karein
    - Detailed error dikhega
 
+
