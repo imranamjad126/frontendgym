@@ -13,13 +13,17 @@ export default function HomePage() {
       if (!user) {
         router.push('/login');
       } else {
-        // Super admin check (you)
+        // Super admin check (you) - OWNER role with specific email
         if (user.email === 'fitnesswithimran1@gmail.com') {
           router.push('/admin');
         } else if (user.role === 'OWNER') {
           router.push('/owner');
         } else if (user.role === 'STAFF') {
           router.push('/staff');
+        } else {
+          // Unknown role, redirect to login
+          console.warn('Unknown user role:', user.role);
+          router.push('/login');
         }
       }
     }
