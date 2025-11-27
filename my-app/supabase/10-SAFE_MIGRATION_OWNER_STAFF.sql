@@ -6,73 +6,38 @@
 -- ============================================
 
 -- ============================================
--- PART 1: CREATE USER_ROLE ENUM SAFELY
+-- PART 1: CREATE OR VERIFY USER_ROLE ENUM SAFELY
 -- ============================================
 
 DO $$
 BEGIN
   -- Check if enum exists
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+    -- Create enum with both values
     CREATE TYPE user_role AS ENUM ('OWNER', 'STAFF');
-    RAISE NOTICE '✅ Created user_role enum';
+    RAISE NOTICE '✅ Created user_role enum with OWNER and STAFF';
   ELSE
-    -- Check if enum has correct values
-    IF NOT EXISTS (
-      SELECT 1 FROM pg_enum 
-      WHERE enumlabel = 'OWNER' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'user_role')
-    ) THEN
-      -- Add OWNER if missing
+    -- Enum exists, add values if missing (safe operation)
+    BEGIN
       ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'OWNER';
-      RAISE NOTICE '✅ Added OWNER to user_role enum';
-    END IF;
+      RAISE NOTICE '✅ OWNER value added to enum (if missing)';
+    EXCEPTION WHEN duplicate_object THEN
+      RAISE NOTICE '✅ OWNER value already exists in enum';
+    END;
     
-    IF NOT EXISTS (
-      SELECT 1 FROM pg_enum 
-      WHERE enumlabel = 'STAFF' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'user_role')
-    ) THEN
-      -- Add STAFF if missing
+    BEGIN
       ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'STAFF';
-      RAISE NOTICE '✅ Added STAFF to user_role enum';
-    END IF;
+      RAISE NOTICE '✅ STAFF value added to enum (if missing)';
+    EXCEPTION WHEN duplicate_object THEN
+      RAISE NOTICE '✅ STAFF value already exists in enum';
+    END;
     
-    RAISE NOTICE '✅ user_role enum already exists';
+    RAISE NOTICE '✅ user_role enum verified';
   END IF;
 END $$;
 
 -- ============================================
--- PART 2: CREATE USERS TABLE SAFELY
--- ============================================
-
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.tables 
-    WHERE table_schema = 'public' AND table_name = 'users'
-  ) THEN
-    CREATE TABLE users (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      email TEXT NOT NULL UNIQUE,
-      role user_role NOT NULL,
-      gym_id UUID,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-    );
-    
-    -- Add foreign key to auth.users if it exists
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'auth' AND table_name = 'users') THEN
-      ALTER TABLE users 
-      DROP CONSTRAINT IF EXISTS users_id_fkey,
-      ADD CONSTRAINT users_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
-    END IF;
-    
-    RAISE NOTICE '✅ Created users table';
-  ELSE
-    RAISE NOTICE '✅ users table already exists';
-  END IF;
-END $$;
-
--- ============================================
--- PART 3: CREATE GYMS TABLE SAFELY (if needed)
+-- PART 2: CREATE GYMS TABLE SAFELY (if needed)
 -- ============================================
 
 DO $$
@@ -87,47 +52,280 @@ BEGIN
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
-    
     RAISE NOTICE '✅ Created gyms table';
   ELSE
     RAISE NOTICE '✅ gyms table already exists';
   END IF;
 END $$;
 
--- Add foreign key from users to gyms if both exist
+-- ============================================
+-- PART 3: CREATE USERS TABLE SAFELY
+-- ============================================
+-- THIS MUST BE DONE BEFORE ANY UPDATE OPERATIONS
+-- ============================================
+
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users')
-     AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'gyms')
-     AND NOT EXISTS (
-       SELECT 1 FROM information_schema.table_constraints 
-       WHERE constraint_name = 'users_gym_id_fkey'
-     ) THEN
-    ALTER TABLE users 
-    ADD CONSTRAINT users_gym_id_fkey 
-    FOREIGN KEY (gym_id) REFERENCES gyms(id) ON DELETE SET NULL;
-    RAISE NOTICE '✅ Added foreign key from users to gyms';
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_schema = 'public' AND table_name = 'users'
+  ) THEN
+    -- Create users table
+    CREATE TABLE users (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      email TEXT NOT NULL UNIQUE,
+      role user_role NOT NULL,
+      gym_id UUID,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+    
+    -- Add foreign key to auth.users if it exists
+    IF EXISTS (
+      SELECT 1 FROM information_schema.tables 
+      WHERE table_schema = 'auth' AND table_name = 'users'
+    ) THEN
+      ALTER TABLE users 
+      DROP CONSTRAINT IF EXISTS users_id_fkey,
+      ADD CONSTRAINT users_id_fkey 
+      FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
+      RAISE NOTICE '✅ Linked users.id to auth.users';
+    END IF;
+    
+    -- Add foreign key to gyms if it exists
+    IF EXISTS (
+      SELECT 1 FROM information_schema.tables 
+      WHERE table_schema = 'public' AND table_name = 'gyms'
+    ) THEN
+      ALTER TABLE users 
+      DROP CONSTRAINT IF EXISTS users_gym_id_fkey,
+      ADD CONSTRAINT users_gym_id_fkey 
+      FOREIGN KEY (gym_id) REFERENCES gyms(id) ON DELETE SET NULL;
+      RAISE NOTICE '✅ Linked users.gym_id to gyms';
+    END IF;
+    
+    RAISE NOTICE '✅ Created users table';
+  ELSE
+    -- Table exists, ensure gym_id column exists
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns 
+      WHERE table_schema = 'public' 
+      AND table_name = 'users' 
+      AND column_name = 'gym_id'
+    ) THEN
+      ALTER TABLE users ADD COLUMN gym_id UUID;
+      
+      -- Add foreign key if gyms table exists
+      IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' AND table_name = 'gyms'
+      ) THEN
+        ALTER TABLE users 
+        ADD CONSTRAINT users_gym_id_fkey 
+        FOREIGN KEY (gym_id) REFERENCES gyms(id) ON DELETE SET NULL;
+      END IF;
+      
+      RAISE NOTICE '✅ Added gym_id column to users table';
+    END IF;
+    
+    RAISE NOTICE '✅ users table already exists';
   END IF;
 END $$;
 
 -- ============================================
--- PART 4: CONVERT ADMIN ROLES TO OWNER SAFELY
+-- PART 4: ENSURE MEMBERS TABLE HAS GYM_ID
 -- ============================================
 
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_schema = 'public' AND table_name = 'members'
+  ) THEN
+    -- Check if gym_id column exists
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns 
+      WHERE table_schema = 'public' 
+      AND table_name = 'members' 
+      AND column_name = 'gym_id'
+    ) THEN
+      ALTER TABLE members ADD COLUMN gym_id UUID;
+      
+      -- Add foreign key if gyms table exists
+      IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' AND table_name = 'gyms'
+      ) THEN
+        ALTER TABLE members 
+        ADD CONSTRAINT members_gym_id_fkey 
+        FOREIGN KEY (gym_id) REFERENCES gyms(id) ON DELETE CASCADE;
+      END IF;
+      
+      RAISE NOTICE '✅ Added gym_id column to members table';
+    END IF;
+  END IF;
+END $$;
+
+-- ============================================
+-- PART 5: ENSURE ATTENDANCE TABLE HAS GYM_ID
+-- ============================================
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_schema = 'public' AND table_name = 'attendance'
+  ) THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns 
+      WHERE table_schema = 'public' 
+      AND table_name = 'attendance' 
+      AND column_name = 'gym_id'
+    ) THEN
+      ALTER TABLE attendance ADD COLUMN gym_id UUID;
+      
+      IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' AND table_name = 'gyms'
+      ) THEN
+        ALTER TABLE attendance 
+        ADD CONSTRAINT attendance_gym_id_fkey 
+        FOREIGN KEY (gym_id) REFERENCES gyms(id) ON DELETE CASCADE;
+      END IF;
+      
+      RAISE NOTICE '✅ Added gym_id column to attendance table';
+    END IF;
+  END IF;
+END $$;
+
+-- ============================================
+-- PART 6: ENSURE PAYMENTS TABLE HAS GYM_ID
+-- ============================================
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_schema = 'public' AND table_name = 'payments'
+  ) THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns 
+      WHERE table_schema = 'public' 
+      AND table_name = 'payments' 
+      AND column_name = 'gym_id'
+    ) THEN
+      ALTER TABLE payments ADD COLUMN gym_id UUID;
+      
+      IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' AND table_name = 'gyms'
+      ) THEN
+        ALTER TABLE payments 
+        ADD CONSTRAINT payments_gym_id_fkey 
+        FOREIGN KEY (gym_id) REFERENCES gyms(id) ON DELETE CASCADE;
+      END IF;
+      
+      RAISE NOTICE '✅ Added gym_id column to payments table';
+    END IF;
+  END IF;
+END $$;
+
+-- ============================================
+-- PART 7: INSERT SUPER ADMIN SAFELY
+-- ============================================
+-- Must be done before RLS policies that reference it
+-- ============================================
+
+DO $$
+DECLARE
+  super_admin_email TEXT := 'fitnesswithimran1@gmail.com';
+  auth_user_id UUID;
+BEGIN
+  -- Only proceed if users table exists
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_schema = 'public' AND table_name = 'users'
+  ) THEN
+    -- Check if Super Admin already exists
+    IF NOT EXISTS (
+      SELECT 1 FROM users WHERE email = super_admin_email
+    ) THEN
+      -- Try to find auth user first
+      IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'auth' AND table_name = 'users'
+      ) THEN
+        SELECT id INTO auth_user_id 
+        FROM auth.users 
+        WHERE email = super_admin_email 
+        LIMIT 1;
+        
+        IF auth_user_id IS NOT NULL THEN
+          -- Insert Super Admin with auth user ID
+          INSERT INTO users (id, email, role, gym_id)
+          VALUES (auth_user_id, super_admin_email, 'OWNER'::user_role, NULL)
+          ON CONFLICT (id) DO UPDATE 
+          SET email = super_admin_email, role = 'OWNER'::user_role;
+          RAISE NOTICE '✅ Super Admin inserted/updated with auth user ID';
+        ELSE
+          -- Auth user not found, create with random UUID
+          INSERT INTO users (id, email, role, gym_id)
+          VALUES (gen_random_uuid(), super_admin_email, 'OWNER'::user_role, NULL)
+          ON CONFLICT (email) DO UPDATE 
+          SET role = 'OWNER'::user_role;
+          RAISE NOTICE '✅ Super Admin inserted (auth user not found, using random UUID)';
+        END IF;
+      ELSE
+        -- No auth.users table, create with random UUID
+        INSERT INTO users (id, email, role, gym_id)
+        VALUES (gen_random_uuid(), super_admin_email, 'OWNER'::user_role, NULL)
+        ON CONFLICT (email) DO UPDATE 
+        SET role = 'OWNER'::user_role;
+        RAISE NOTICE '✅ Super Admin inserted (no auth.users table)';
+      END IF;
+    ELSE
+      -- Update existing Super Admin to OWNER role
+      UPDATE users 
+      SET role = 'OWNER'::user_role 
+      WHERE email = super_admin_email AND role::text != 'OWNER';
+      RAISE NOTICE '✅ Super Admin already exists, verified OWNER role';
+    END IF;
+  ELSE
+    RAISE NOTICE '⚠️ users table does not exist, skipping Super Admin insert';
+  END IF;
+END $$;
+
+-- ============================================
+-- PART 8: CONVERT ADMIN ROLES TO OWNER SAFELY
+-- ============================================
+-- Only runs if users table exists
+-- ============================================
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_schema = 'public' AND table_name = 'users'
+  ) THEN
     -- Check if there are any ADMIN roles to convert
+    -- Use text comparison to handle enum casting
     IF EXISTS (
       SELECT 1 FROM users 
-      WHERE role::text = 'ADMIN' OR role::text NOT IN ('OWNER', 'STAFF')
+      WHERE role::text = 'ADMIN'
     ) THEN
-      -- Try to update ADMIN to OWNER (will fail silently if enum doesn't have ADMIN)
+      -- Try to update ADMIN to OWNER
       BEGIN
-        UPDATE users SET role = 'OWNER'::user_role WHERE role::text = 'ADMIN';
-        RAISE NOTICE '✅ Converted ADMIN roles to OWNER';
+        UPDATE users 
+        SET role = 'OWNER'::user_role 
+        WHERE role::text = 'ADMIN';
+        
+        IF FOUND THEN
+          RAISE NOTICE '✅ Converted ADMIN roles to OWNER';
+        ELSE
+          RAISE NOTICE '✅ No ADMIN roles found to convert';
+        END IF;
       EXCEPTION WHEN OTHERS THEN
-        RAISE NOTICE '⚠️ Could not convert ADMIN roles (may not exist)';
+        RAISE NOTICE '⚠️ Could not convert ADMIN roles: %', SQLERRM;
       END;
     ELSE
       RAISE NOTICE '✅ No ADMIN roles to convert';
@@ -138,12 +336,15 @@ BEGIN
 END $$;
 
 -- ============================================
--- PART 5: ADD CONSTRAINT SAFELY
+-- PART 9: ADD CONSTRAINT SAFELY
 -- ============================================
 
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_schema = 'public' AND table_name = 'users'
+  ) THEN
     -- Drop old constraint if exists
     ALTER TABLE users DROP CONSTRAINT IF EXISTS staff_must_have_gym;
     
@@ -160,59 +361,7 @@ BEGIN
 END $$;
 
 -- ============================================
--- PART 6: INSERT SUPER ADMIN SAFELY
--- ============================================
-
-DO $$
-DECLARE
-  super_admin_email TEXT := 'fitnesswithimran1@gmail.com';
-  auth_user_id UUID;
-BEGIN
-  -- Check if users table exists
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
-    -- Check if Super Admin already exists in users table
-    IF NOT EXISTS (
-      SELECT 1 FROM users WHERE email = super_admin_email
-    ) THEN
-      -- Try to find auth user first
-      IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'auth' AND table_name = 'users') THEN
-        SELECT id INTO auth_user_id 
-        FROM auth.users 
-        WHERE email = super_admin_email 
-        LIMIT 1;
-        
-        IF auth_user_id IS NOT NULL THEN
-          -- Insert Super Admin with auth user ID
-          INSERT INTO users (id, email, role, gym_id)
-          VALUES (auth_user_id, super_admin_email, 'OWNER'::user_role, NULL)
-          ON CONFLICT (id) DO UPDATE 
-          SET email = super_admin_email, role = 'OWNER'::user_role;
-          RAISE NOTICE '✅ Super Admin inserted/updated';
-        ELSE
-          RAISE NOTICE '⚠️ Super Admin auth user not found. Please create in Supabase Auth first.';
-        END IF;
-      ELSE
-        -- No auth.users table, create with random UUID
-        INSERT INTO users (id, email, role, gym_id)
-        VALUES (gen_random_uuid(), super_admin_email, 'OWNER'::user_role, NULL)
-        ON CONFLICT (email) DO UPDATE 
-        SET role = 'OWNER'::user_role;
-        RAISE NOTICE '✅ Super Admin inserted (no auth.users table)';
-      END IF;
-    ELSE
-      -- Update existing Super Admin to OWNER role
-      UPDATE users 
-      SET role = 'OWNER'::user_role 
-      WHERE email = super_admin_email;
-      RAISE NOTICE '✅ Super Admin already exists, updated to OWNER role';
-    END IF;
-  ELSE
-    RAISE NOTICE '⚠️ users table does not exist, skipping Super Admin insert';
-  END IF;
-END $$;
-
--- ============================================
--- PART 7: ENABLE RLS ON TABLES (if they exist)
+-- PART 10: ENABLE RLS ON TABLES
 -- ============================================
 
 DO $$
@@ -241,7 +390,7 @@ BEGIN
 END $$;
 
 -- ============================================
--- PART 8: DROP OLD POLICIES SAFELY
+-- PART 11: DROP OLD POLICIES SAFELY
 -- ============================================
 
 DROP POLICY IF EXISTS "Admins can manage all gyms" ON gyms;
@@ -255,7 +404,7 @@ DROP POLICY IF EXISTS "Admins can view all payments" ON payments;
 DROP POLICY IF EXISTS "Admins can manage all payments" ON payments;
 
 -- ============================================
--- PART 9: CREATE RLS POLICIES SAFELY
+-- PART 12: CREATE RLS POLICIES SAFELY
 -- ============================================
 
 -- GYMS POLICIES
@@ -576,7 +725,7 @@ BEGIN
 END $$;
 
 -- ============================================
--- PART 10: VERIFICATION
+-- PART 13: VERIFICATION
 -- ============================================
 
 SELECT '✅ Migration Complete!' as status;
@@ -584,4 +733,3 @@ SELECT '✅ Super Admin ready: fitnesswithimran1@gmail.com' as super_admin;
 SELECT '✅ Users table ready' as users_table;
 SELECT '✅ RLS policies updated for OWNER/STAFF' as rls_policies;
 SELECT '✅ System ready for use' as system_status;
-
