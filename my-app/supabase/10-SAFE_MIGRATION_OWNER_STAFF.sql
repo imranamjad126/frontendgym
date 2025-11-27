@@ -234,23 +234,49 @@ END $$;
 -- PART 7: INSERT SUPER ADMIN SAFELY
 -- ============================================
 -- Must be done before RLS policies that reference it
+-- Handles FK constraints safely - no violations
 -- ============================================
 
 DO $$
 DECLARE
   super_admin_email TEXT := 'fitnesswithimran1@gmail.com';
   auth_user_id UUID;
+  existing_user_id UUID;
+  has_fk_constraint BOOLEAN := false;
 BEGIN
   -- Only proceed if users table exists
   IF EXISTS (
     SELECT 1 FROM information_schema.tables 
     WHERE table_schema = 'public' AND table_name = 'users'
   ) THEN
-    -- Check if Super Admin already exists
-    IF NOT EXISTS (
-      SELECT 1 FROM users WHERE email = super_admin_email
-    ) THEN
-      -- Try to find auth user first
+    -- Check if FK constraint exists on users.id
+    SELECT EXISTS (
+      SELECT 1 FROM information_schema.table_constraints tc
+      JOIN information_schema.key_column_usage kcu 
+        ON tc.constraint_name = kcu.constraint_name
+      WHERE tc.table_schema = 'public' 
+        AND tc.table_name = 'users'
+        AND tc.constraint_type = 'FOREIGN KEY'
+        AND kcu.column_name = 'id'
+        AND tc.constraint_name LIKE '%auth%'
+    ) INTO has_fk_constraint;
+    
+    -- Check if Super Admin already exists in users table
+    SELECT id INTO existing_user_id
+    FROM users 
+    WHERE email = super_admin_email
+    LIMIT 1;
+    
+    IF existing_user_id IS NOT NULL THEN
+      -- Super Admin exists, just update role (don't touch gym_id or id)
+      UPDATE users 
+      SET role = 'OWNER'::user_role 
+      WHERE email = super_admin_email 
+        AND (role::text != 'OWNER' OR role IS NULL);
+      RAISE NOTICE '✅ Super Admin already exists, updated role to OWNER';
+    ELSE
+      -- Super Admin doesn't exist, need to insert
+      -- First, try to find auth user
       IF EXISTS (
         SELECT 1 FROM information_schema.tables 
         WHERE table_schema = 'auth' AND table_name = 'users'
@@ -259,36 +285,26 @@ BEGIN
         FROM auth.users 
         WHERE email = super_admin_email 
         LIMIT 1;
-        
-        IF auth_user_id IS NOT NULL THEN
-          -- Insert Super Admin with auth user ID
-          INSERT INTO users (id, email, role, gym_id)
-          VALUES (auth_user_id, super_admin_email, 'OWNER'::user_role, NULL)
-          ON CONFLICT (id) DO UPDATE 
-          SET email = super_admin_email, role = 'OWNER'::user_role;
-          RAISE NOTICE '✅ Super Admin inserted/updated with auth user ID';
-        ELSE
-          -- Auth user not found, create with random UUID
-          INSERT INTO users (id, email, role, gym_id)
-          VALUES (gen_random_uuid(), super_admin_email, 'OWNER'::user_role, NULL)
-          ON CONFLICT (email) DO UPDATE 
-          SET role = 'OWNER'::user_role;
-          RAISE NOTICE '✅ Super Admin inserted (auth user not found, using random UUID)';
-        END IF;
+      END IF;
+      
+      IF auth_user_id IS NOT NULL THEN
+        -- Auth user exists, use that ID (safe for FK)
+        INSERT INTO users (id, email, role, gym_id)
+        VALUES (auth_user_id, super_admin_email, 'OWNER'::user_role, NULL)
+        ON CONFLICT (id) DO UPDATE 
+        SET email = super_admin_email, role = 'OWNER'::user_role;
+        RAISE NOTICE '✅ Super Admin inserted with auth user ID';
+      ELSIF has_fk_constraint THEN
+        -- FK constraint exists but auth user not found - cannot insert
+        RAISE NOTICE '⚠️ Super Admin auth user not found and FK constraint exists. Please create auth user first in Supabase Auth.';
       ELSE
-        -- No auth.users table, create with random UUID
+        -- No FK constraint, safe to use random UUID
         INSERT INTO users (id, email, role, gym_id)
         VALUES (gen_random_uuid(), super_admin_email, 'OWNER'::user_role, NULL)
         ON CONFLICT (email) DO UPDATE 
         SET role = 'OWNER'::user_role;
-        RAISE NOTICE '✅ Super Admin inserted (no auth.users table)';
+        RAISE NOTICE '✅ Super Admin inserted with random UUID (no FK constraint)';
       END IF;
-    ELSE
-      -- Update existing Super Admin to OWNER role
-      UPDATE users 
-      SET role = 'OWNER'::user_role 
-      WHERE email = super_admin_email AND role::text != 'OWNER';
-      RAISE NOTICE '✅ Super Admin already exists, verified OWNER role';
     END IF;
   ELSE
     RAISE NOTICE '⚠️ users table does not exist, skipping Super Admin insert';
