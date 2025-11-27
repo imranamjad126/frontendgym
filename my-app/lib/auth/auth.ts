@@ -107,7 +107,13 @@ export async function getAuthUser() {
 }
 
 export async function getSession() {
-  const { data: { session } } = await supabase.auth.getSession();
+  // Use getSession() which reads from cookies/localStorage
+  // This ensures session persistence across page refreshes
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error) {
+    console.error('Error getting session:', error);
+    return null;
+  }
   return session;
 }
 

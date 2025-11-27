@@ -33,12 +33,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Refresh session when auth state changes
       const currentSession = await getSession();
       setSession(currentSession);
+      // Set loading to false after auth state change
       setLoading(false);
     });
 
     return () => {
       subscription.unsubscribe();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Redirect to login if not authenticated and on protected route

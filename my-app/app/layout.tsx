@@ -15,7 +15,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     pathname === route || pathname.startsWith(route + "/")
   );
 
-  // Show loader during auth check (not the full layout)
+  // Show loader during auth check (prevents layout flash)
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -27,13 +27,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Public routes: no navbar/sidebar
+  // Public routes: no navbar/sidebar (login page should never show layout)
   if (isPublic) {
     return <>{children}</>;
   }
 
   // Protected routes: show navbar + sidebar
-  // Only show if session exists (middleware handles redirect if not)
+  // Session should exist (middleware handles redirect if not)
   if (session) {
     return (
       <div className="flex">
@@ -46,7 +46,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If no session and not public, show loader (redirect will happen)
+  // If no session and not public, show loader (middleware will redirect)
+  // This prevents flash of wrong layout
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <div className="text-center">
