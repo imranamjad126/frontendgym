@@ -84,40 +84,60 @@ export default function LoginPage() {
           <p className="text-center text-slate-600 mt-2">Sign in to your account</p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              <div 
+                className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded"
+                role="alert"
+                aria-live="polite"
+              >
                 {error}
               </div>
             )}
             
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
+              <label 
+                htmlFor="email" 
+                className="block text-sm font-medium text-slate-700 mb-1"
+              >
                 Email
               </label>
               <Input
                 id="email"
+                name="email"
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="Enter your email"
                 className="w-full"
+                aria-required="true"
+                aria-invalid={error ? 'true' : 'false'}
+                aria-describedby={error ? 'error-message' : undefined}
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
+              <label 
+                htmlFor="password" 
+                className="block text-sm font-medium text-slate-700 mb-1"
+              >
                 Password
               </label>
               <Input
                 id="password"
+                name="password"
                 type="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="Enter your password"
                 className="w-full"
+                aria-required="true"
+                aria-invalid={error ? 'true' : 'false'}
+                aria-describedby={error ? 'error-message' : undefined}
               />
             </div>
 
@@ -125,6 +145,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               className="w-full"
+              aria-busy={loading}
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
