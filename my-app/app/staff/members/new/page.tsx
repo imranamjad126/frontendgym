@@ -21,7 +21,7 @@ export default function AddMemberPage() {
       router.push('/login');
       return;
     }
-    if (!loading && user && user.role !== 'STAFF' && user.role !== 'ADMIN') {
+    if (!loading && user && user.role !== 'STAFF' && user.role !== 'OWNER') {
       router.push('/unauthorized');
       return;
     }
@@ -38,9 +38,7 @@ export default function AddMemberPage() {
   }) => {
     if (!user) return;
 
-    const gym_id = user.role === 'ADMIN' 
-      ? (user.gym_id || prompt('Enter gym ID:') || '')
-      : (user.gym_id || '');
+    const gym_id = user.gym_id || '';
 
     if (!gym_id) {
       alert('Gym ID is required');

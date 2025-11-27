@@ -20,21 +20,21 @@ export default function StaffMembersPage() {
       router.push('/login');
       return;
     }
-    if (!loading && user && user.role !== 'STAFF' && user.role !== 'ADMIN') {
+    if (!loading && user && user.role !== 'STAFF' && user.role !== 'OWNER') {
       router.push('/unauthorized');
       return;
     }
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (user && (user.role === 'STAFF' || user.role === 'ADMIN')) {
+    if (user && (user.role === 'STAFF' || user.role === 'OWNER')) {
       loadMembers();
     }
   }, [user]);
 
   const loadMembers = async () => {
     try {
-      const gym_id = user?.role === 'ADMIN' ? undefined : user?.gym_id || null;
+      const gym_id = user?.gym_id || null;
       const data = await getAllMembers(gym_id);
       const membersWithStatus: MemberWithStatus[] = data.map(member => ({
         ...member,
@@ -56,7 +56,7 @@ export default function StaffMembersPage() {
     );
   }
 
-  if (!user || (user.role !== 'STAFF' && user.role !== 'ADMIN')) {
+  if (!user || (user.role !== 'STAFF' && user.role !== 'OWNER')) {
     return null;
   }
 

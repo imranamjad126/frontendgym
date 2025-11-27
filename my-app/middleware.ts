@@ -118,28 +118,36 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Fetch role for RBAC
+  // Fetch role and email for RBAC
   const { data: userData } = await supabase
     .from('users')
-    .select('role')
+    .select('role, email')
     .eq('id', session.user.id)
     .single();
 
   const userRole = userData?.role;
+  const userEmail = userData?.email;
 
-  // Admin-only routes
-  if (
-    pathname.startsWith('/admin') &&
-    pathname !== '/admin/auto-fix'
-  ) {
-    if (userRole !== 'ADMIN') {
+  // Super Admin routes (special email check - you are the super admin)
+  // Super admin can access /admin routes to create gyms and owners
+  const isSuperAdmin = userEmail === 'fitnesswithimran1@gmail.com';
+  
+  if (pathname.startsWith('/admin') && pathname !== '/admin/auto-fix') {
+    if (!isSuperAdmin) {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
   }
 
-  // Staff-only routes
+  // Owner-only routes
+  if (pathname.startsWith('/owner')) {
+    if (userRole !== 'OWNER') {
+      return NextResponse.redirect(new URL('/unauthorized', request.url));
+    }
+  }
+
+  // Staff-only routes (staff can access, owners can also access)
   if (pathname.startsWith('/staff')) {
-    if (userRole !== 'STAFF' && userRole !== 'ADMIN') {
+    if (userRole !== 'STAFF' && userRole !== 'OWNER') {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
   }

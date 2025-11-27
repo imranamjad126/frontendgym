@@ -3,21 +3,19 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { getAllGyms } from '@/lib/data/gyms';
-import { getAllUsers } from '@/lib/data/users';
+import { getAllMembers } from '@/lib/data/members';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Users, TrendingUp } from 'lucide-react';
+import { Building2, Users, TrendingUp, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
-export default function AdminDashboard() {
+export default function OwnerDashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const isSuperAdmin = user?.email === 'fitnesswithimran1@gmail.com';
   const [stats, setStats] = useState({
-    gyms: 0,
-    owners: 0,
-    totalMembers: 0,
+    members: 0,
+    activeMembers: 0,
+    unpaidMembers: 0,
   });
   const [loadingStats, setLoadingStats] = useState(true);
 
@@ -26,31 +24,30 @@ export default function AdminDashboard() {
       router.push('/login');
       return;
     }
-    if (!loading && !isSuperAdmin) {
+    if (!loading && user?.role !== 'OWNER') {
       router.push('/unauthorized');
       return;
     }
-  }, [user, loading, router, isSuperAdmin]);
+  }, [user, loading, router]);
 
   useEffect(() => {
-    if (isSuperAdmin) {
+    if (user?.role === 'OWNER' && user.gym_id) {
       loadStats();
     }
-  }, [isSuperAdmin]);
+  }, [user]);
 
   const loadStats = async () => {
+    if (!user?.gym_id) return;
+    
     try {
-      const [gyms, users] = await Promise.all([
-        getAllGyms(),
-        getAllUsers(),
-      ]);
-
-      const ownersCount = users.filter(u => u.role === 'OWNER').length;
+      const members = await getAllMembers(user.gym_id);
+      const active = members.filter(m => m.status === 'ACTIVE').length;
+      const unpaid = members.filter(m => !m.fee_paid).length;
 
       setStats({
-        gyms: gyms.length,
-        owners: ownersCount,
-        totalMembers: 0, // Will be calculated from members table
+        members: members.length,
+        activeMembers: active,
+        unpaidMembers: unpaid,
       });
     } catch (error) {
       console.error('Failed to load stats:', error);
@@ -67,7 +64,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!isSuperAdmin) {
+  if (user?.role !== 'OWNER') {
     return null;
   }
 
@@ -75,37 +72,22 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Super Admin Dashboard</h1>
-          <p className="text-slate-600 mt-1">Manage gyms and owners</p>
+          <h1 className="text-3xl font-bold text-slate-900">Owner Dashboard</h1>
+          <p className="text-slate-600 mt-1">Full access to your gym management</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Gyms</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.gyms}</div>
-            <Link href="/admin/gyms">
-              <Button variant="link" className="p-0 h-auto">
-                Manage Gyms →
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Owners</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Members</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.owners}</div>
-            <Link href="/admin/owners">
+            <div className="text-2xl font-bold">{stats.members}</div>
+            <Link href="/staff/members">
               <Button variant="link" className="p-0 h-auto">
-                Manage Owners →
+                View All →
               </Button>
             </Link>
           </CardContent>
@@ -113,12 +95,27 @@ export default function AdminDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Members</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Members</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalMembers}</div>
-            <p className="text-xs text-muted-foreground">Across all gyms</p>
+            <div className="text-2xl font-bold">{stats.activeMembers}</div>
+            <p className="text-xs text-muted-foreground">Currently active</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Unpaid Members</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.unpaidMembers}</div>
+            <Link href="/staff/members?filter=unpaid">
+              <Button variant="link" className="p-0 h-auto">
+                View Unpaid →
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -129,16 +126,22 @@ export default function AdminDashboard() {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Link href="/admin/gyms">
+            <Link href="/staff/members/new">
               <Button variant="outline" className="w-full justify-start">
-                <Building2 className="mr-2 h-4 w-4" />
-                Manage Gyms
+                <UserPlus className="mr-2 h-4 w-4" />
+                Add Member
               </Button>
             </Link>
-            <Link href="/admin/owners">
+            <Link href="/owner/staff">
               <Button variant="outline" className="w-full justify-start">
                 <Users className="mr-2 h-4 w-4" />
-                Manage Owners
+                Manage Staff
+              </Button>
+            </Link>
+            <Link href="/staff/attendance">
+              <Button variant="outline" className="w-full justify-start">
+                <TrendingUp className="mr-2 h-4 w-4" />
+                Mark Attendance
               </Button>
             </Link>
           </CardContent>
@@ -147,6 +150,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
-
 

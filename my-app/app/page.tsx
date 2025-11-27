@@ -12,10 +12,15 @@ export default function HomePage() {
     if (!loading) {
       if (!user) {
         router.push('/login');
-      } else if (user.role === 'ADMIN') {
-        router.push('/admin');
-      } else if (user.role === 'STAFF') {
-        router.push('/staff');
+      } else {
+        // Super admin check (you)
+        if (user.email === 'fitnesswithimran1@gmail.com') {
+          router.push('/admin');
+        } else if (user.role === 'OWNER') {
+          router.push('/owner');
+        } else if (user.role === 'STAFF') {
+          router.push('/staff');
+        }
       }
     }
   }, [user, loading, router]);

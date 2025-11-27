@@ -19,22 +19,24 @@ export default function GymsPage() {
   const [gymName, setGymName] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const isSuperAdmin = user?.email === 'fitnesswithimran1@gmail.com';
+
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
       return;
     }
-    if (!loading && user?.role !== 'ADMIN') {
+    if (!loading && !isSuperAdmin) {
       router.push('/unauthorized');
       return;
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, isSuperAdmin]);
 
   useEffect(() => {
-    if (user?.role === 'ADMIN') {
+    if (isSuperAdmin) {
       loadGyms();
     }
-  }, [user]);
+  }, [isSuperAdmin]);
 
   const loadGyms = async () => {
     try {

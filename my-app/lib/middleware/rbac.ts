@@ -37,12 +37,12 @@ export function requireRole(allowedRoles: UserRole[]) {
   };
 }
 
-export function requireAdmin() {
-  return requireRole(['ADMIN']);
+export function requireOwner() {
+  return requireRole(['OWNER']);
 }
 
-export function requireStaffOrAdmin() {
-  return requireRole(['ADMIN', 'STAFF']);
+export function requireStaffOrOwner() {
+  return requireRole(['OWNER', 'STAFF']);
 }
 
 

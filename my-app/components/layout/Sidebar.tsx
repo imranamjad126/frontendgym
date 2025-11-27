@@ -23,36 +23,59 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 
 function NavigationItems() {
   const { user } = useAuth();
+  const isSuperAdmin = user?.email === 'fitnesswithimran1@gmail.com';
 
   return (
     <nav className="space-y-2">
-      {user?.role === 'ADMIN' && (
+      {/* Super Admin Navigation */}
+      {isSuperAdmin && (
         <>
           <Navigation 
             href="/admin" 
-            label="Admin Dashboard" 
+            label="Super Admin" 
             icon={Shield} 
             iconColor="text-purple-600" 
             iconHoverColor="hover:text-purple-700" 
           />
           <Navigation 
             href="/admin/gyms" 
-            label="Gyms" 
+            label="Manage Gyms" 
             icon={Building2} 
             iconColor="text-indigo-600" 
             iconHoverColor="hover:text-indigo-700" 
           />
           <Navigation 
-            href="/admin/staff" 
-            label="Staff" 
+            href="/admin/owners" 
+            label="Manage Owners" 
             icon={Users} 
             iconColor="text-blue-600" 
             iconHoverColor="hover:text-blue-700" 
           />
         </>
       )}
+
+      {/* Owner Navigation (Full Access) */}
+      {user?.role === 'OWNER' && !isSuperAdmin && (
+        <>
+          <Navigation 
+            href="/owner" 
+            label="Owner Dashboard" 
+            icon={LayoutDashboard} 
+            iconColor="text-blue-600" 
+            iconHoverColor="hover:text-blue-700" 
+          />
+          <Navigation 
+            href="/owner/staff" 
+            label="Manage Staff" 
+            icon={Users} 
+            iconColor="text-indigo-600" 
+            iconHoverColor="hover:text-indigo-700" 
+          />
+        </>
+      )}
       
-      {(user?.role === 'STAFF' || user?.role === 'ADMIN') && (
+      {/* Staff & Owner Shared Navigation */}
+      {(user?.role === 'STAFF' || user?.role === 'OWNER') && (
         <>
           <Navigation 
             href={user?.role === 'ADMIN' ? '/' : '/staff'} 
