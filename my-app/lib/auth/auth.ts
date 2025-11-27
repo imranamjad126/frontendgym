@@ -2,17 +2,43 @@ import { supabase } from './client';
 import { AuthUser, UserRole } from './types';
 
 export async function signIn(email: string, password: string) {
+  // Ensure inputs are trimmed (defensive check)
+  const trimmedEmail = email.trim();
+  const trimmedPassword = password.trim();
+
+  // Validate inputs
+  if (!trimmedEmail || !trimmedPassword) {
+    throw new Error('Email and password are required.');
+  }
+
+  // Log for debugging (without exposing password)
+  console.log('🔐 SignIn attempt:', {
+    email: trimmedEmail,
+    emailLength: trimmedEmail.length,
+    passwordLength: trimmedPassword.length,
+    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅ Set' : '❌ Missing',
+    supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Missing'
+  });
+
   const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
+    email: trimmedEmail,
+    password: trimmedPassword,
   });
 
   if (error) {
+    console.error('❌ Supabase auth error:', {
+      message: error.message,
+      status: error.status,
+      name: error.name
+    });
+
     // Provide more specific error messages
-    if (error.message.includes('Invalid login credentials')) {
+    if (error.message.includes('Invalid login credentials') || error.message.includes('Invalid credentials')) {
       throw new Error('Invalid email or password. Please check your credentials.');
     } else if (error.message.includes('Email not confirmed')) {
       throw new Error('Please confirm your email before signing in.');
+    } else if (error.message.includes('Too many requests')) {
+      throw new Error('Too many login attempts. Please wait a few minutes and try again.');
     } else {
       throw new Error(error.message || 'Failed to sign in. Please try again.');
     }
@@ -27,6 +53,7 @@ export async function signIn(email: string, password: string) {
       .single();
 
     if (userError || !userData) {
+      console.error('❌ User not found in users table:', userError);
       throw new Error('User account not found. Please contact administrator.');
     }
   }

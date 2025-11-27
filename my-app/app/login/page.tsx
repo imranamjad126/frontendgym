@@ -20,11 +20,29 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await signIn(email, password);
+      // Trim email and password to remove any spaces
+      const trimmedEmail = email.trim();
+      const trimmedPassword = password.trim();
+
+      // Validate inputs
+      if (!trimmedEmail || !trimmedPassword) {
+        setError('Email and password are required.');
+        setLoading(false);
+        return;
+      }
+
+      console.log('🔍 Login attempt:', { 
+        email: trimmedEmail, 
+        emailLength: trimmedEmail.length,
+        passwordLength: trimmedPassword.length,
+        hasSpaces: trimmedEmail !== email || trimmedPassword !== password
+      });
+
+      await signIn(trimmedEmail, trimmedPassword);
       router.push('/');
       router.refresh();
     } catch (err: any) {
-      console.error('Login error:', err);
+      console.error('❌ Login error:', err);
       setError(err.message || 'Failed to sign in. Please check your credentials.');
     } finally {
       setLoading(false);

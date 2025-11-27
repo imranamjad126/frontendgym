@@ -14,6 +14,7 @@ export async function middleware(request: NextRequest) {
   // PUBLIC ROUTES - Check FIRST before any auth checks
   const publicRoutes = [
     '/login',
+    '/login-diagnostic', // Login diagnostic tool
     '/setup-admin',
     '/test-auth',
     '/verify-setup',
