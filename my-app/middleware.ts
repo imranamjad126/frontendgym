@@ -14,15 +14,10 @@ export async function middleware(request: NextRequest) {
   // Public routes (no auth needed)
   const publicRoutes = [
     '/login',
-    '/login-diagnostic',
-    '/setup-admin',
-    '/test-auth',
-    '/verify-setup',
-    '/auto-fix',
-    '/admin/auto-fix',
-    '/auto-fix-complete'
+    '/auth', // Matches /auth/* and /auth
   ];
 
+  // Check if route is public
   const isPublicRoute = publicRoutes.some(route => {
     if (pathname === route) return true;
     if (pathname.startsWith(route + '/')) return true;
@@ -36,7 +31,8 @@ export async function middleware(request: NextRequest) {
     isPublicRoute
   ) {
     // If logged in and trying to access login page, redirect based on role
-    if (pathname === '/login' || pathname === '/setup-admin') {
+    if (pathname === '/login' || pathname.startsWith('/login')) {
+      // Initialize Supabase client for cookie handling
       const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -87,7 +83,7 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // Initialize Supabase server session
+  // Initialize Supabase server client with proper cookie handling
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -114,15 +110,27 @@ export async function middleware(request: NextRequest) {
     }
   );
 
+  // Get session (this reads cookies properly)
   const { data: { session } } = await supabase.auth.getSession();
 
-  // BLOCK UNAUTHENTICATED USERS from ALL protected content
-  // This includes / (root) which is NOT in publicRoutes
-  if (!session) {
+  // Protected routes: /admin*, /owner*, /staff*, /dashboard*
+  const isProtectedRoute = 
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/owner') ||
+    pathname.startsWith('/staff') ||
+    pathname.startsWith('/dashboard');
+
+  // BLOCK UNAUTHENTICATED USERS from protected routes
+  if (isProtectedRoute && !session) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Fetch role and email for RBAC
+  // If no session and not a protected route, allow access (root, etc.)
+  if (!session) {
+    return response;
+  }
+
+  // Fetch role and email for RBAC (only if session exists)
   const { data: userData } = await supabase
     .from('users')
     .select('role, email')
@@ -132,28 +140,34 @@ export async function middleware(request: NextRequest) {
   const userRole = userData?.role;
   const userEmail = userData?.email;
 
-  // Super Admin routes (special email check - you are the super admin)
-  // Super admin can access /admin routes to create gyms and owners
+  // Super Admin routes (special email check)
   const isSuperAdmin = userEmail === 'fitnesswithimran1@gmail.com';
   
-  if (pathname.startsWith('/admin') && pathname !== '/admin/auto-fix') {
+  // Protect /admin* routes - Super Admin only
+  if (pathname.startsWith('/admin')) {
     if (!isSuperAdmin) {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
   }
 
-  // Owner-only routes
+  // Protect /owner* routes - Owner only
   if (pathname.startsWith('/owner')) {
     if (userRole !== 'OWNER') {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
   }
 
-  // Staff-only routes (staff can access, owners can also access)
+  // Protect /staff* routes - Staff and Owner can access
   if (pathname.startsWith('/staff')) {
     if (userRole !== 'STAFF' && userRole !== 'OWNER') {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
+  }
+
+  // Protect /dashboard* routes - All authenticated users can access
+  if (pathname.startsWith('/dashboard')) {
+    // All authenticated users (OWNER, STAFF, Super Admin) can access
+    // No additional role check needed
   }
 
   return response;
