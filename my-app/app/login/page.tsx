@@ -82,7 +82,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Gym Management System</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Admin Gym Management System</CardTitle>
           <p className="text-center text-slate-600 mt-2">Sign in to your account</p>
         </CardHeader>
         <CardContent>
