@@ -10,8 +10,15 @@ export default function ConditionalLayout({ children }: { children: ReactNode })
   // Public routes that MUST NOT show Navbar / Sidebar
   const publicRoutes = ["/login", "/auth", "/forgot-password"];
 
-  // Check if pathname is exactly a public route
-  const isPublic = publicRoutes.includes(pathname);
+  // If pathname is not available yet, default to children only (safe for SSR)
+  if (!pathname) {
+    return <>{children}</>;
+  }
+
+  // Check if pathname is a public route (exact match or starts with)
+  const isPublic = publicRoutes.some(route => 
+    pathname === route || pathname.startsWith(route + "/")
+  );
 
   // Public routes: render children only (NO Navbar/Sidebar)
   if (isPublic) {
