@@ -356,3 +356,4 @@ SELECT 'RLS policies: Super Admin, Owner, Staff' as policies;
 SELECT 'Super Admin email: fitnesswithimran1@gmail.com' as super_admin;
 
 
+

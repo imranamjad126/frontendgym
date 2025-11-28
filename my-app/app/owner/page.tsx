@@ -42,7 +42,7 @@ export default function OwnerDashboard() {
     try {
       const members = await getAllMembers(user.gym_id);
       const active = members.filter(m => m.status === 'ACTIVE').length;
-      const unpaid = members.filter(m => !m.fee_paid).length;
+      const unpaid = members.filter(m => !m.feePaid).length;
 
       setStats({
         members: members.length,
@@ -150,5 +150,6 @@ export default function OwnerDashboard() {
     </div>
   );
 }
+
 
 

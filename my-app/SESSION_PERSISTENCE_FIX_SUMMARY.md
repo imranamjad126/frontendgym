@@ -315,3 +315,4 @@ if (isPublic) {
 4. **Session Restoration**: Automatic session restoration from cookies on page load
 5. **Error Handling**: Proper error handling prevents crashes on session errors
 
+

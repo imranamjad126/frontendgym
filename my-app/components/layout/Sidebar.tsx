@@ -78,7 +78,7 @@ function NavigationItems() {
       {(user?.role === 'STAFF' || user?.role === 'OWNER') && (
         <>
           <Navigation 
-            href={user?.role === 'ADMIN' ? '/' : '/staff'} 
+            href={isSuperAdmin ? '/admin' : '/staff'} 
             label="Dashboard" 
             icon={LayoutDashboard} 
             iconColor="text-blue-600" 

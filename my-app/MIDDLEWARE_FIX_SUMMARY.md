@@ -293,3 +293,4 @@ if (pathname === '/login' || pathname.startsWith('/login')) {
 4. **Public Route Check**: Happens before auth check to avoid unnecessary Supabase calls
 5. **RBAC**: Role checks happen after session verification to ensure user data is available
 
+

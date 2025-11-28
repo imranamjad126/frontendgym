@@ -218,3 +218,4 @@ export { Sidebar as default } from '@/components/layout/Sidebar';
 - `components/layout/Sidebar.tsx` - Still used via Sidebar wrapper
 - `lib/contexts/AuthContext.tsx` - Still used for auth state
 
+

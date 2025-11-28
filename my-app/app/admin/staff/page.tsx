@@ -113,7 +113,7 @@ export default function StaffPage() {
     );
   }
 
-  if (user?.role !== 'ADMIN') {
+  if (!isSuperAdmin) {
     return null;
   }
 

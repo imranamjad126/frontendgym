@@ -278,3 +278,4 @@ export function Header() {
 - ✅ Loader shown during auth check (not full layout)
 - ✅ Clean separation of public/protected routes
 
+

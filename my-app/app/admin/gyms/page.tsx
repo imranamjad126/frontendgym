@@ -74,7 +74,7 @@ export default function GymsPage() {
     );
   }
 
-  if (user?.role !== 'ADMIN') {
+  if (!isSuperAdmin) {
     return null;
   }
 

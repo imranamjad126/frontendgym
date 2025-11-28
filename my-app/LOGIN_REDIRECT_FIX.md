@@ -120,3 +120,4 @@ export default function DashboardPage() {
 - ✅ Middleware protects the route
 - ✅ Clean, maintainable code
 
+
