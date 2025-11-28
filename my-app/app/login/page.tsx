@@ -44,9 +44,32 @@ export default function LoginPage() {
       const { supabase } = await import('@/lib/auth/client');
       await supabase.auth.refreshSession();
       
-      // Redirect to dashboard after successful login
-      router.push('/dashboard');
-      router.refresh();
+      // Fetch user role to determine redirect
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role, email')
+          .eq('id', authUser.id)
+          .single();
+
+        const userRole = userData?.role;
+        const userEmail = userData?.email;
+        const isSuperAdmin = userEmail === 'fitnesswithimran1@gmail.com';
+
+        // Redirect based on role
+        let redirectUrl = '/dashboard';
+        if (isSuperAdmin) redirectUrl = '/admin';
+        else if (userRole === 'OWNER') redirectUrl = '/owner';
+        else if (userRole === 'STAFF') redirectUrl = '/staff';
+
+        router.push(redirectUrl);
+        router.refresh();
+      } else {
+        // Fallback to dashboard if user data not available
+        router.push('/dashboard');
+        router.refresh();
+      }
     } catch (err: any) {
       console.error('❌ Login error:', err);
       setError(err.message || 'Failed to sign in. Please check your credentials.');

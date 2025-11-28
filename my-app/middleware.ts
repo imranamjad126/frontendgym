@@ -20,6 +20,65 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/public/") ||
     isPublicRoute
   ) {
+    // If logged-in user tries to access /login, redirect to role-based dashboard
+    if (pathname === "/login" || pathname.startsWith("/login")) {
+      // Initialize Supabase client to check session
+      let response = NextResponse.next({
+        request: {
+          headers: request.headers,
+        },
+      });
+
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get(name: string) {
+              return request.cookies.get(name)?.value;
+            },
+            set(name: string, value: string, options: any) {
+              request.cookies.set({ name, value, ...options });
+              response = NextResponse.next({
+                request: { headers: request.headers },
+              });
+              response.cookies.set({ name, value, ...options });
+            },
+            remove(name: string, options: any) {
+              request.cookies.set({ name, value: '', ...options });
+              response = NextResponse.next({
+                request: { headers: request.headers },
+              });
+              response.cookies.set({ name, value: '', ...options });
+            },
+          },
+        }
+      );
+
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session) {
+        // Fetch user role and email from users table
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role, email')
+          .eq('id', session.user.id)
+          .single();
+
+        const userRole = userData?.role;
+        const userEmail = userData?.email;
+        const isSuperAdmin = userEmail === 'fitnesswithimran1@gmail.com';
+
+        // Redirect based on role
+        let redirectUrl = '/dashboard';
+        if (isSuperAdmin) redirectUrl = '/admin';
+        else if (userRole === 'OWNER') redirectUrl = '/owner';
+        else if (userRole === 'STAFF') redirectUrl = '/staff';
+
+        return NextResponse.redirect(new URL(redirectUrl, request.url));
+      }
+    }
+
     return NextResponse.next();
   }
 
