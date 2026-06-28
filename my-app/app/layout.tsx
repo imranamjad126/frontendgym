@@ -1,19 +1,21 @@
+import type { Metadata } from "next";
 import "./globals.css";
-import { AuthProvider } from "@/lib/contexts/AuthContext";
-import ConditionalLayout from "@/components/layout/ConditionalLayout";
-import type { ReactNode } from "react";
+import { Layout } from "@/components/layout/Layout";
 
-export const metadata = {
-  title: "Gym Manager",
+export const metadata: Metadata = {
+  title: "Gym Membership Management",
+  description: "Premium gym membership management system",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
-      <body>
-        <AuthProvider>
-          <ConditionalLayout>{children}</ConditionalLayout>
-        </AuthProvider>
+      <body className="antialiased" suppressHydrationWarning>
+        <Layout>{children}</Layout>
       </body>
     </html>
   );
